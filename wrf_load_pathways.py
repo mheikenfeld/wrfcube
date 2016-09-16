@@ -85,35 +85,90 @@ Functions for the analysis of WRF microphysical pathways
 
 #Morrison microphysics
 
-def load_wrf_morr_allproc(filename):
+def load_wrf_morr_mass_proc(filename):
     from wrfload import loadwrfcube
-    Proclist=['NSUBC',
-    'NSUBI',
-    'NSUBS',
-    'NSUBR',
-    'PRD',
+    Proclist_Morr_mass=['PRD',
     'PRE',
     'PRDS',
-    'NNUCCC',
-    'MNUCCC',
     'PRA',
     'PRC',
     'PCC',
-    'NNUCCD','MNUCCD','MNUCCR','NNUCCR',
-    'NPRA','NRAGG','NSAGG','NPRC','NPRC1',
-    'PRAI','PRCI','PSACWS','NPSACWS','PSACWI',
-    'NPSACWI' ,'NPRCI','NPRAI','NMULTS','NMULTR',
-    'QMULTS','QMULTR','PRACS','NPRACS',
-    'PCCN','PSMLT','EVPMS','NSMLTS','NSMLTR','PIACR','NIACR',
-    'PRACI','PIACRS','NIACRS','PRACIS','EPRD','EPRDS','PRACG',
-    'PSACWG','PGSACW','PGRACS','PRDG','EPRDG','EVPMG','PGMLT',
+    'PCCN',
+    'PSMLT',
+    'EVPMS',
+    'NSMLTS',
+    'QMULTS',
+    'QMULTR',
+    'PRACS',
+    'PSACWG',
+    'PGSACW',
+    'PGRACS',
+    'PRDG',
+    'EPRDG',
+    'EVPMG',
+    'PGMLT',
+    'PRACI',
+    'PIACRS',
+    'NIACRS',
+    'PRACIS',
+    'EPRD',
+    'EPRDS',
+    'PRACG',
+    'QMULTG',
+    'MNUCCR',
+    'QMULTRG'
+    'PRAI',
+    'PRCI',
+    'PSACWS',
+    'PIACR',
+    'PSACWI',
+    'PSACR']
+    Dict={}
+    for process in Proclist_Morr_mass:
+        cube=loadwrfcube(filename,process+'3D')
+        cube.rename('process')
+        #Cubelist.append(cube)
+        Dict[process]=cube
+    #return Cubelist
+    return Dict
+def load_wrf_morr_num_proc(filename):
+    from wrfload import loadwrfcube
+
+    Proclist_Morr_number=['NSUBC',
+    'NSUBI',
+    'NSUBS',
+    'NSUBR',
+    'NNUCCC',
+    'MNUCCC',
+    'NNUCCD',
+    'MNUCCD',
+    'NNUCCR',
+    'NPRA',
+    'NRAGG',
+    'NSAGG',
+    'NPRC',
+    'NPRC1',
+    'NPSACWS',
+    'NPSACWI',
+    'NPRCI',
+    'NPRAI',
+    'NMULTS',
+    'NMULTR',
+    'NPRACS',
+    'NSMLTR',
+    'NIACR',
     'NPRACG',
     #'NPSACWG',
-    'NSCNG','NGRACS','NGMLTG','NGMLTR',
-    'NSUBG','PSACR','NMULTG','NMULTRG','QMULTG','QMULTRG']
+    'NSCNG',
+    'NGRACS',
+    'NGMLTG',
+    'NGMLTR',
+    'NSUBG',
+    'NMULTG',
+    'NMULTRG']
     #Cubelist=[]
     Dict={}
-    for process in Proclist:
+    for process in Proclist_Morr_number:
         if process=='NSMLTR':
                 cube=loadwrfcube(filename,process)
         else:
@@ -166,8 +221,10 @@ def calculate_wrf_morr_path_phases(filename):
 
         
 def calculate_wrf_morr_path(filename,path):
-    if (path=='processes'):
-        out=load_wrf_morr_allproc(filename)
+    if (path=='processes_mass'):
+        out=load_wrf_morr_mass_proc(filename)
+    if (path=='processes_number'):
+        out=load_wrf_morr_number_proc(filename)
     if path=='hydrometeor':
         out=calculate_wrf_morr_path_hydrometeors(filename)
     if path=='phase':
