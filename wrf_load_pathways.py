@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+m# -*- coding: utf-8 -*-
 """
 Created on Tue Feb  2 12:30:47 2016
 
@@ -113,7 +113,7 @@ Proclist_Morr_mass=['PRD',
     'PRACG',
     'QMULTG',
     'MNUCCR',
-    'QMULTRG'
+    'QMULTRG',
     'PRAI',
     'PRCI',
     'PSACWS',
@@ -226,7 +226,7 @@ def calculate_wrf_morr_path_phases(filename):
         
 def calculate_wrf_morr_path(filename,path):
     if (path=='processes_mass'):
-        out=load_wrf_morr_mass_proc(filename)
+pirun        out=load_wrf_morr_mass_proc(filename)
     if (path=='processes_number'):
         out=load_wrf_morr_num_proc(filename)
     if path=='hydrometeor':
