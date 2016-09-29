@@ -93,7 +93,6 @@ Proclist_Morr_mass=['PRD',
     'PCCN',
     'PSMLT',
     'EVPMS',
-    'NSMLTS',
     'QMULTS',
     'QMULTR',
     'PRACS',
@@ -106,7 +105,6 @@ Proclist_Morr_mass=['PRD',
     'PGMLT',
     'PRACI',
     'PIACRS',
-    'NIACRS',
     'PRACIS',
     'EPRD',
     'EPRDS',
@@ -155,6 +153,7 @@ Proclist_Morr_number=['NSUBC',
     'NMULTR',
     'NPRACS',
     'NSMLTR',
+    'NSMLTS',
     'NIACR',
     'NPRACG',
     #'NPSACWG',
@@ -164,7 +163,8 @@ Proclist_Morr_number=['NSUBC',
     'NGMLTR',
     'NSUBG',
     'NMULTG',
-    'NMULTRG']
+    'NMULTRG,'    
+    'NIACRS']
     
 def load_wrf_morr_num_proc(filename):
     from wrfload import loadwrfcube
