@@ -64,7 +64,6 @@ def derivewrfcube_mult(filenames,variable,add_coordinates=None):
 
 
 def derivewrfcube_single(filenames,variable,add_coordinates=None):
-    from iris import load,cube
     if variable == 'potential temperature':
         variable_cube=calculate_wrf_potential_temperature(filenames)
         #variable_cube_out=addcoordinates(filenames, 'T',variable_cube,add_coordinates)
@@ -97,7 +96,7 @@ def derivewrfcube_single(filenames,variable,add_coordinates=None):
         #variable_cube_out=addcoordinates(filenames, 'T',variable_cube,add_coordinates)
     elif variable == 'w_at_T':    
         variable_cube=calculate_wrf_w_at_T(filenames)
-        #variable_cube_out=addcoordinates(filenames, 'T',variable_cube,add_coordinates)
+        variable_cube=addcoordinates(filenames, 'T',variable_cube,add_coordinates)
     elif variable == 'surface precipitation':
         variable_cube=calculate_wrf_surface_precipitation(filenames)
         #variable_cube_out=addcoordinates(filenames, 'T',variable_cube,add_coordinates)
@@ -160,7 +159,6 @@ def calculate_RH(QVAPOR,T,p):
     return RH   
     
 def calculate_wrf_LWC(filename):
-    from iris import load
     QCLOUD=loadwrfcube(filename, 'QCLOUD')
     QRAIN=loadwrfcube(filename, 'QRAIN')
     LWC=QCLOUD+QRAIN
@@ -211,8 +209,9 @@ def calculate_wrf_maximum_reflectivity(filename):
     return MAX_REFL_10CM
     
 def calculate_wrf_w_at_T(filename):
+    from iris import cube
     w=loadwrfcube(filename, 'W')
-    w_at_T = 0.5*(w[:,:-1,:,:]+w[:,1:,:,:])
+    w_at_T = cube.Cube(0.5*(w[:,:-1,:,:].data+w[:,1:,:,:].data),var_name='w',long_name='vertical velocity on T grid', units='m/s')
     return w_at_T
 
 def calculate_wrf_density(filename):    
@@ -401,13 +400,13 @@ def add_aux_coordinates(filenames, variable,variable_cube,add_coordinates):
                 variable_cube.add_aux_coord(lat_coord,(0,2,3))
                 variable_cube.add_aux_coord(lon_coord,(0,2,3))            
             elif (coords[0].name()=='Time' and (coords[1].name()=='bottom_top' or 'bottom_top_stag') and coords[2].name()=='south_north' and coords[3].name()=='west_east_stag'):
-                lat_coord=make_lat_stagx_coordinate(filenames)
-                lon_coord=make_lon_stagx_coordinate(filenames)   
+                lat_coord=make_lat_xstag_coordinate(filenames)
+                lon_coord=make_lon_xstag_coordinate(filenames)   
                 variable_cube.add_aux_coord(lat_coord,(0,2,3))
                 variable_cube.add_aux_coord(lon_coord,(0,2,3))
             elif (coords[0].name()=='Time' and (coords[1].name()=='bottom_top' or 'bottom_top_stag') and coords[2].name()=='south_north_stag' and coords[3].name()=='west_east'):
-                lat_coord=make_lat_stagy_coordinate(filenames)
-                lon_coord=make_lon_stagy_coordinate(filenames)   
+                lat_coord=make_lat_ystag_coordinate(filenames)
+                lon_coord=make_lon_ystag_coordinate(filenames)   
                 variable_cube.add_aux_coord(lat_coord,(0,2,3))
                 variable_cube.add_aux_coord(lon_coord,(0,2,3))
             elif (coords[0].name()=='Time'  and coords[1].name()=='south_north' and coords[2].name()=='west_east'):
@@ -416,13 +415,13 @@ def add_aux_coordinates(filenames, variable,variable_cube,add_coordinates):
                 variable_cube.add_aux_coord(lat_coord,(0,1,2))
                 variable_cube.add_aux_coord(lon_coord,(0,1,2))            
             elif (coords[0].name()=='Time'  and coords[1].name()=='south_north' and coords[2].name()=='west_east_stag'):
-                lat_coord=make_lat_stagx_coordinate(filenames)
-                lon_coord=make_lon_stagx_coordinate(filenames)   
+                lat_coord=make_lat_xstag_coordinate(filenames)
+                lon_coord=make_lon_xstag_coordinate(filenames)   
                 variable_cube.add_aux_coord(lat_coord,(0,1,2))
                 variable_cube.add_aux_coord(lon_coord,(0,1,2))
             elif (coords[0].name()=='Time' and coords[1].name()=='south_north_stag' and coords[2].name()=='west_east'):
-                lat_coord=make_lat_stagy_coordinate(filenames)
-                lon_coord=make_lon_stagy_coordinate(filenames)   
+                lat_coord=make_lat_ystag_coordinate(filenames)
+                lon_coord=make_lon_ystag_coordinate(filenames)   
                 variable_cube.add_aux_coord(lat_coord,(0,1,2))
                 variable_cube.add_aux_coord(lon_coord,(0,1,2))
             else:

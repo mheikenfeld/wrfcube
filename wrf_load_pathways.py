@@ -84,10 +84,7 @@ Functions for the analysis of WRF microphysical pathways
 #Morrison microphysics
 
 #Morrison microphysics
-
-def load_wrf_morr_mass_proc(filename):
-    from wrfload import loadwrfcube
-    Proclist_Morr_mass=['PRD',
+Proclist_Morr_mass=['PRD',
     'PRE',
     'PRDS',
     'PRA',
@@ -123,18 +120,20 @@ def load_wrf_morr_mass_proc(filename):
     'PIACR',
     'PSACWI',
     'PSACR']
+
+def load_wrf_morr_mass_proc(filename):
+    from wrfload import loadwrfcube
     Dict={}
     for process in Proclist_Morr_mass:
+        print(process)
         cube=loadwrfcube(filename,process+'3D')
         cube.rename('process')
         #Cubelist.append(cube)
         Dict[process]=cube
     #return Cubelist
     return Dict
-def load_wrf_morr_num_proc(filename):
-    from wrfload import loadwrfcube
 
-    Proclist_Morr_number=['NSUBC',
+Proclist_Morr_number=['NSUBC',
     'NSUBI',
     'NSUBS',
     'NSUBR',
@@ -166,6 +165,11 @@ def load_wrf_morr_num_proc(filename):
     'NSUBG',
     'NMULTG',
     'NMULTRG']
+    
+def load_wrf_morr_num_proc(filename):
+    from wrfload import loadwrfcube
+
+ 
     #Cubelist=[]
     Dict={}
     for process in Proclist_Morr_number:
@@ -179,10 +183,7 @@ def load_wrf_morr_num_proc(filename):
     #return Cubelist
     return Dict
 
-    
-    
-def calculate_wrf_morr_path_hydrometeors(filename):
-    Hydropath_list=[
+Hydropath_list=[
     'VAPORCLOUD',
     'VAPORRAIN',
     'VAPORICE',
@@ -197,18 +198,21 @@ def calculate_wrf_morr_path_hydrometeors(filename):
     'RAINGRAUP',
     'ICESNOW',
     'ICEGRAUP',
-    'SNOWGRAUP']
+    'SNOWGRAUP']    
+    
+def calculate_wrf_morr_path_hydrometeors(filename):
     Dict={}
-    Cubelist=[]
+    #Cubelist=[]
     for path in Hydropath_list:
         cube=calculate_wrf_morr_path(filename,path)
         #Cubelist.append(cube)
         Dict[path]=cube
     #return Cubelist
     return Dict
+    
+Phasepath_list=['vaporliquid','vaporfrozen','liquidfrozen']
 
 def calculate_wrf_morr_path_phases(filename):
-    Phasepath_list=['vaporliquid','vaporfrozen','liquidfrozen']
     Dict={}
     #Cubelist=[]
     for path in Phasepath_list:
@@ -224,7 +228,7 @@ def calculate_wrf_morr_path(filename,path):
     if (path=='processes_mass'):
         out=load_wrf_morr_mass_proc(filename)
     if (path=='processes_number'):
-        out=load_wrf_morr_number_proc(filename)
+        out=load_wrf_morr_num_proc(filename)
     if path=='hydrometeor':
         out=calculate_wrf_morr_path_hydrometeors(filename)
     if path=='phase':
