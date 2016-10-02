@@ -90,7 +90,7 @@ Proclist_Morr_mass=['PRD',
     'PRA',
     'PRC',
     'PCC',
-    'PCCN',
+    #'PCCN', currently wrongly written out by the pathway analysis
     'PSMLT',
     'EVPMS',
     'QMULTS',
@@ -288,8 +288,8 @@ def calculate_wrf_morr_path_VAPORCLOUD(filename):
     from wrfload import loadwrfcube
     #print('calculate process rates VAPOR/CLOUD')
     PCC= loadwrfcube(filename, 'PCC3D') 
-    PCCN=loadwrfcube(filename, 'PCCN3D')
-    P_VAPORCLOUD = PCC+PCCN
+    #PCCN=loadwrfcube(filename, 'PCCN3D')
+    P_VAPORCLOUD = PCC#+PCCN
     P_VAPORCLOUD.rename('P_VAPORCLOUD')
     return P_VAPORCLOUD
     
