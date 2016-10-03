@@ -84,7 +84,7 @@ Functions for the analysis of WRF microphysical pathways
 #Morrison microphysics
 
 #Morrison microphysics
-Proclist_Morr_mass=['PRD',
+Proclist_Morr_mass_load=['PRD',
     'PRE',
     'PRDS',
     'PRA',
@@ -119,15 +119,31 @@ Proclist_Morr_mass=['PRD',
     'PSACWI',
     'PSACR']
 
+Proclist_Morr_mass=list(Proclist_Morr_mass_load)
+Proclist_Morr_mass.append('EPCC')
+
 def load_wrf_morr_mass_proc(filename):
     from wrfload import loadwrfcube
+    import numpy as np
     Dict={}
-    for process in Proclist_Morr_mass:
+    for process in Proclist_Morr_mass_load:
         print(process)
-        cube=loadwrfcube(filename,process+'3D')
-        cube.rename('process')
-        #Cubelist.append(cube)
-        Dict[process]=cube
+        if process=='PCC':
+            cube=loadwrfcube(filename,process+'3D')
+            cube1=cube[:]
+            cube1.data=np.clip(cube1.data,a_min=-np.inf,a_max=0)            
+            cube1.rename('PCC')
+            Dict['PCC']=cube1
+            cube2=cube[:]
+            cube2.data=np.clip(cube1.data,a_min=0,a_max=np.inf)
+            cube2.rename('EPCC')
+            Dict['EPCC']=cube2
+
+        else:
+            cube=loadwrfcube(filename,process+'3D')
+            cube.rename('process')
+            #Cubelist.append(cube)
+            Dict[process]=cube
     #return Cubelist
     return Dict
 
