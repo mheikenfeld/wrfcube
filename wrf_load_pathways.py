@@ -7,6 +7,121 @@ Functions for the analysis of WRF microphysical pathways
 @author: heikenfeld
 """
 
+
+#Thompson Microphysics:
+#    
+#    !+---+-----------------------------------------------------------------+
+#!.. Source/sink terms.  First 2 chars: "pr" represents source/sink of
+#!.. mass while "pn" represents source/sink of number.  Next char is one
+#!.. of "v" for water vapor, "r" for rain, "i" for cloud ice, "w" for
+#!.. cloud water, "s" for snow, and "g" for graupel.  Next chars
+#!.. represent processes: "de" for sublimation/deposition, "ev" for
+#!.. evaporation, "fz" for freezing, "ml" for melting, "au" for
+#!.. autoconversion, "nu" for ice nucleation, "hm" for Hallet/Mossop
+#!.. secondary ice production, and "c" for collection followed by the
+#!.. character for the species being collected.  ALL of these terms are
+#!.. positive (except for deposition/sublimation terms which can switch
+#!.. signs based on super/subsaturation) and are treated as negatives
+#!.. where necessary in the tendency equations.
+#!+---+-----------------------------------------------------------------+
+
+#       
+#    
+List_Processes_Thompson_Mass=[
+         'prw_vcd',       
+         'pri_inu',       
+         'pri_ihm',       
+         'pri_wfz',      
+         'pri_rfz',
+         'pri_ide',
+         'pri_rci',
+         'pri_iha',
+         'prv_rev',
+         'prr_wau',
+         'prr_rcw',
+         'prr_rcs',
+         'prr_rcg',
+         'prr_sml',
+         'prr_gml',
+         'prr_rci',
+         'prs_iau',
+         'prs_sci',
+         'prs_rcs',
+         'prs_scw',
+         'prs_sde',
+         'prs_ihm',
+         'prs_ide',
+         'prg_scw',
+         'prg_rfz',
+         'prg_gde',
+         'prg_gcw',
+         'prg_rci',
+         'prg_rcs',
+         'prg_rcg',
+         'prg_ihm',
+                              
+                              
+                              ]    
+
+List_Processes_Thompson_Number=[
+         'pnc_wcd',
+         'pnc_wau',
+         'pnc_rcw',
+         'pnc_scw',
+         'pnc_gcw',
+         'pnr_wau',
+         'pnr_rcs',
+         'pnr_rcg',
+         'pnr_rci',
+         'pnr_sml',
+         'pnr_gml',
+         'pnr_rev',
+         'pnr_rcr',
+         'pnr_rfz',
+         'pni_inu',
+         'pni_ihm',
+         'pni_wfz',
+         'pni_rfz',
+         'pni_ide',
+         'pni_rci',
+         'pni_sci',
+         'pni_iau',
+         'pni_iha',
+         'pna_rca',
+         'pna_sca',
+         'pna_gca',      
+         'pna_rca',
+         'pna_sca',
+         'pna_gca',             
+         'pnd_rcd'
+         'pnd_scd',
+         'pnd_gcd'               
+                              ]    
+
+def load_wrf_thom_mass_proc(filename):
+    from wrfload import loadwrfcube
+    Dict={}
+    for process in List_Processes_Thompson_Mass:
+        print(process)
+        cube=loadwrfcube(filename,process)
+        cube.rename('process')
+        #Cubelist.append(cube)
+        Dict[process]=cube
+    #return Cubelist
+    return Dict
+ 
+def load_wrf_thom_number_proc(filename):
+    from wrfload import loadwrfcube
+    Dict={}
+    for process in List_Processes_Thompson_Number:
+        print(process)
+        cube=loadwrfcube(filename,process)
+        cube.rename('process')
+        #Cubelist.append(cube)
+        Dict[process]=cube
+    #return Cubelist
+    return Dict                             
+                              
 #
 #! MICROPHYSICAL PROCESSES
 #
@@ -81,10 +196,14 @@ Functions for the analysis of WRF microphysical pathways
     #     REAL, DIMENSION(KTS:KTE) ::  QMULTG    ! CHANGE Q DUE TO ICE MULT DROPLETS/GRAUPEL
     #     REAL, DIMENSION(KTS:KTE) ::  QMULTRG    ! CHANGE Q DUE TO ICE MULT RAIN/GRAUPEL
 
+
+
+
 #Morrison microphysics
 
 #Morrison microphysics
-Proclist_Morr_mass_load=['PRD',
+Proclist_Morr_mass_load=[
+    'PRD',
     'PRE',
     'PRDS',
     'PRA',
