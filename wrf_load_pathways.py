@@ -356,7 +356,13 @@ def calculate_wrf_morr_path_phases(filename):
         Dict[path]=cube
     #return Cubelist
     return Dict
-
+    
+def calculate_wrf_morr_path(filename,path):
+    if (path=='processes_mass'):
+        out=load_wrf_thom_mass_proc(filename)
+    if (path=='processes_number'):
+        out=load_wrf_thom_num_proc(filename)
+    return out   
 
         
 def calculate_wrf_morr_path(filename,path):
