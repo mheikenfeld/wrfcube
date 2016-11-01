@@ -357,11 +357,11 @@ def calculate_wrf_morr_path_phases(filename):
     #return Cubelist
     return Dict
     
-def calculate_wrf_morr_path(filename,path):
+def calculate_wrf_thompson_path(filename,path):
     if (path=='processes_mass'):
         out=load_wrf_thom_mass_proc(filename)
     if (path=='processes_number'):
-        out=load_wrf_thom_num_proc(filename)
+        out=load_wrf_thom_number_proc(filename)
     return out   
 
         
