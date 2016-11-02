@@ -102,7 +102,7 @@ def load_wrf_thom_mass_proc(filename):
     for i_process,process in enumerate(List_Processes_Thompson_Mass):
         print(process)
         if (i_process==0):
-            cube=loadwrfcube(filename,process,add_coordinates='pz')
+            cube=loadwrfcube(filename,process,add_coordinates=['pz'])
             cube.rename(process)
             #Cubelist.append(cube)
             Dict[process]=cube
@@ -124,7 +124,7 @@ def load_wrf_thom_number_proc(filename):
     for i_process,process in enumerate(List_Processes_Thompson_Number):
         print(process)
         if (i_process==0):
-            cube=loadwrfcube(filename,process,add_coordinates='pz')
+            cube=loadwrfcube(filename,process,add_coordinates=['pz'])
             cube.rename(process)
             #Cubelist.append(cube)
             Dict[process]=cube
@@ -266,7 +266,7 @@ def load_wrf_morr_mass_proc(filename):
     for i_process,process in enumerate(Proclist_Morr_mass_load):
         print(process)
         if (i_process==0):
-            cube=loadwrfcube(filename,process+'3D',add_coordinates='pz')
+            cube=loadwrfcube(filename,process+'3D',add_coordinates=['pz'])
             cube.rename(process)
             #Cubelist.append(cube)
             Dict[process]=cube
@@ -347,7 +347,7 @@ def load_wrf_morr_num_proc(filename):
     for i_process,process in enumerate(Proclist_Morr_number):
         print(process)
         if (i_process==0):
-            cube=loadwrfcube(filename,process+'3D',add_coordinates='pz')
+            cube=loadwrfcube(filename,process+'3D',add_coordinates=['pz'])
             cube.rename(process)
             #Cubelist.append(cube)
             z_coord=cube.coord('geopotential')

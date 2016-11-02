@@ -345,8 +345,7 @@ def add_aux_coordinates(filenames, variable,variable_cube,add_coordinates):
     #BOTTOM_TOP_PATCH_END_STAG=attributes['BOTTOM-TOP_PATCH_END_STAG']
     coords=variable_cube.coords()
     for coordinate in add_coordinates:
-        
-        if add_coordinates=='xy':
+        if coordinate=='xy':
             for dim in range(len(coords)):
                 if (coords[dim].name()=='west_east'):
                     x_coord=make_x_coord(DX,WEST_EAST_PATCH_END_UNSTAG)
@@ -361,7 +360,7 @@ def add_aux_coordinates(filenames, variable,variable_cube,add_coordinates):
                     y_stag_coord=make_y_stag_coord(DY, SOUTH_NORTH_PATCH_END_STAG)
                     variable_cube.add_aux_coord(y_stag_coord,dim)
                     
-        if add_coordinates=='z':    
+        if coordinate=='z':    
             if (coords[0].name()=='Time' and coords[1].name()=='bottom_top' and coords[2].name()=='south_north' and coords[3].name()=='west_east'):
                 z_coord=make_z_coordinate(filenames,coords)
                 variable_cube.add_aux_coord(z_coord,(0,1,2,3))
@@ -377,7 +376,7 @@ def add_aux_coordinates(filenames, variable,variable_cube,add_coordinates):
             else:
                 print("no z coordinates added")
                 
-        if add_coordinates=='pressure' :      
+        if coordinate=='pressure' :      
             if (coords[0].name()=='Time' and coords[1].name()=='bottom_top' and coords[2].name()=='south_north' and coords[3].name()=='west_east'):
                 p_coord=make_p_coordinate(filenames,coords)
                 variable_cube.add_aux_coord(p_coord,(0,1,2,3))
@@ -393,7 +392,7 @@ def add_aux_coordinates(filenames, variable,variable_cube,add_coordinates):
             else:
                 print("p coordinates added")
                 
-        if (add_coordinates=='zp' or add_coordinates=='pz'):    
+        if (coordinate=='zp' or coordinate=='pz'):    
             if (coords[0].name()=='Time' and coords[1].name()=='bottom_top' and coords[2].name()=='south_north' and coords[3].name()=='west_east'):
                 z_coord=make_z_coordinate(filenames,coords)
                 variable_cube.add_aux_coord(z_coord,(0,1,2,3))
@@ -417,7 +416,7 @@ def add_aux_coordinates(filenames, variable,variable_cube,add_coordinates):
             else:
                 print("no z and p coordinates added")
                 
-        if add_coordinates=='latlon':    
+        if coordinate=='latlon':    
             if (coords[0].name()=='Time' and (coords[1].name()=='bottom_top' or 'bottom_top_stag') and coords[2].name()=='south_north' and coords[3].name()=='west_east'):
                 lat_coord=make_lat_coordinate(filenames)
                 lon_coord=make_lon_coordinate(filenames)   
