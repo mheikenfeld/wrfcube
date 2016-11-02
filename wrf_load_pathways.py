@@ -99,7 +99,7 @@ List_Processes_Thompson_Number=[
 def load_wrf_thom_mass_proc(filename):
     from wrfload import loadwrfcube
     Dict={}
-    for process in List_Processes_Thompson_Mass:
+    for i_process,process in enumerate(List_Processes_Thompson_Mass):
         print(process)
         if (i_process==0):
             cube=loadwrfcube(filename,process,add_coordinates='pz')
@@ -121,7 +121,7 @@ def load_wrf_thom_mass_proc(filename):
 def load_wrf_thom_number_proc(filename):
     from wrfload import loadwrfcube
     Dict={}
-    for process in List_Processes_Thompson_Number:
+    for i_process,process in enumerate(List_Processes_Thompson_Number):
         print(process)
         if (i_process==0):
             cube=loadwrfcube(filename,process,add_coordinates='pz')
