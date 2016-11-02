@@ -101,8 +101,18 @@ def load_wrf_thom_mass_proc(filename):
     Dict={}
     for process in List_Processes_Thompson_Mass:
         print(process)
-        cube=loadwrfcube(filename,process)
-        cube.rename('process')
+        if (i_process==0):
+            cube=loadwrfcube(filename,process,add_coordinates='pz')
+            cube.rename(process)
+            #Cubelist.append(cube)
+            Dict[process]=cube
+            z_coord=cube.coord('geopotential')
+            p_coord=cube.coord('pressure')
+        else:
+            cube=loadwrfcube(filename,process)
+            cube.rename(process)
+            cube.add_aux_coord(z_coord,(0,1,2,3))
+            cube.add_aux_coord(p_coord,(0,1,2,3))
         #Cubelist.append(cube)
         Dict[process]=cube
     #return Cubelist
@@ -113,12 +123,22 @@ def load_wrf_thom_number_proc(filename):
     Dict={}
     for process in List_Processes_Thompson_Number:
         print(process)
-        cube=loadwrfcube(filename,process)
-        cube.rename('process')
+        if (i_process==0):
+            cube=loadwrfcube(filename,process,add_coordinates='pz')
+            cube.rename(process)
+            #Cubelist.append(cube)
+            Dict[process]=cube
+            z_coord=cube.coord('geopotential')
+            p_coord=cube.coord('pressure')
+        else:
+            cube=loadwrfcube(filename,process)
+            cube.rename(process)
+            cube.add_aux_coord(z_coord,(0,1,2,3))
+            cube.add_aux_coord(p_coord,(0,1,2,3))
         #Cubelist.append(cube)
         Dict[process]=cube
     #return Cubelist
-    return Dict                             
+    return Dict                     
                               
 #
 #! MICROPHYSICAL PROCESSES
@@ -243,24 +263,43 @@ def load_wrf_morr_mass_proc(filename):
     from wrfload import loadwrfcube
     import numpy as np
     Dict={}
-    for process in Proclist_Morr_mass_load:
+    for i_process,process in enumerate(Proclist_Morr_mass_load):
         print(process)
-        if process=='PCC':
-            cube=loadwrfcube(filename,process+'3D')
-            cube1=cube[:]
-            cube1.data=np.clip(cube1.data,a_min=-np.inf,a_max=0)            
-            cube1.rename('PCC')
-            Dict['PCC']=cube1
-            cube2=cube[:]
-            cube2.data=np.clip(cube1.data,a_min=0,a_max=np.inf)
-            cube2.rename('EPCC')
-            Dict['EPCC']=cube2
-
-        else:
-            cube=loadwrfcube(filename,process+'3D')
-            cube.rename('process')
+        if (i_process==0):
+            cube=loadwrfcube(filename,process+'3D',add_coordinates='pz')
+            cube.rename(process)
             #Cubelist.append(cube)
             Dict[process]=cube
+            z_coord=cube.coord('geopotential')
+            p_coord=cube.coord('pressure')
+            Dict[process]=cube
+
+        else:
+            print(process)
+            if process=='PCC':
+                cube=loadwrfcube(filename,process+'3D', add_coordinates=add_coord_flag)
+                cube1=cube[:]
+                cube1.data=np.clip(cube1.data,a_min=-np.inf,a_max=0)            
+                cube1.rename('PCC')
+                cube1.add_aux_coord(z_coord,(0,1,2,3))
+                cube1.add_aux_coord(p_coord,(0,1,2,3))
+
+                Dict['PCC']=cube1
+                cube2=cube[:]
+                cube2.data=np.clip(cube1.data,a_min=0,a_max=np.inf)
+                cube2.rename('EPCC')
+                cube2.add_aux_coord(z_coord,(0,1,2,3))
+                cube2.add_aux_coord(p_coord,(0,1,2,3))
+                Dict['EPCC']=cube2
+    
+            else:
+                cube=loadwrfcube(filename,process+'3D')
+                cube.rename(process)
+                cube.add_aux_coord(z_coord,(0,1,2,3))
+                cube.add_aux_coord(p_coord,(0,1,2,3))
+                #Cubelist.append(cube)
+                Dict[process]=cube
+
     #return Cubelist
     return Dict
 
@@ -305,12 +344,23 @@ def load_wrf_morr_num_proc(filename):
  
     #Cubelist=[]
     Dict={}
-    for process in Proclist_Morr_number:
-        if process=='NSMLTR':
-                cube=loadwrfcube(filename,process)
+    for i_process,process in enumerate(Proclist_Morr_number):
+        print(process)
+        if (i_process==0):
+            cube=loadwrfcube(filename,process+'3D',add_coordinates='pz')
+            cube.rename(process)
+            #Cubelist.append(cube)
+            z_coord=cube.coord('geopotential')
+            p_coord=cube.coord('pressure')
         else:
-            cube=loadwrfcube(filename,process+'3D')
-            cube.rename('process')
+            if process=='NSMLTR':
+                cube=loadwrfcube(filename,process)
+            else:
+                cube=loadwrfcube(filename,process+'3D')
+            cube.rename(process)
+            cube.add_aux_coord(z_coord,(0,1,2,3))
+            cube.add_aux_coord(p_coord,(0,1,2,3))
+
         #Cubelist.append(cube)
         Dict[process]=cube
     #return Cubelist

@@ -393,6 +393,30 @@ def add_aux_coordinates(filenames, variable,variable_cube,add_coordinates):
             else:
                 print("p coordinates added")
                 
+        if (add_coordinates=='zp' or add_coordinates=='pz'):    
+            if (coords[0].name()=='Time' and coords[1].name()=='bottom_top' and coords[2].name()=='south_north' and coords[3].name()=='west_east'):
+                z_coord=make_z_coordinate(filenames,coords)
+                variable_cube.add_aux_coord(z_coord,(0,1,2,3))
+                p_coord=make_p_coordinate(filenames,coords)
+                variable_cube.add_aux_coord(p_coord,(0,1,2,3))
+            elif (coords[0].name()=='Time' and coords[1].name()=='bottom_top' and coords[2].name()=='south_north' and coords[3].name()=='west_east_stag'):
+                z_coord=make_z_xstag_coordinate(filenames)     
+                variable_cube.add_aux_coord(z_coord)
+                p_coord=make_p_xstag_coordinate(filenames)
+                variable_cube.add_aux_coord(p_coord)
+            elif (coords[0].name()=='Time' and coords[1].name()=='bottom_top' and coords[2].name()=='south_north_stag' and coords[3].name()=='west_east'):
+                z_coord=make_z_ystag_coordinate(filenames)
+                variable_cube.add_aux_coord(z_coord,(0,1,2,3))
+                p_coord=make_p_ystag_coordinate(filenames)
+                variable_cube.add_aux_coord(p_coord,(0,1,2,3))
+            elif (coords[0].name()=='Time' and coords[1].name()=='bottom_top_stag' and coords[2].name()=='south_north' and coords[3].name()=='west_east'):
+                z_stag_coord=make_z_stag_coordinate(filenames)   
+                variable_cube.add_aux_coord(z_stag_coord,(0,1,2,3))
+                p_coord=make_p_stag_coordinate(filenames)   
+                variable_cube.add_aux_coord(p_coord,(0,1,2,3))
+            else:
+                print("no z and p coordinates added")
+                
         if add_coordinates=='latlon':    
             if (coords[0].name()=='Time' and (coords[1].name()=='bottom_top' or 'bottom_top_stag') and coords[2].name()=='south_north' and coords[3].name()=='west_east'):
                 lat_coord=make_lat_coordinate(filenames)
