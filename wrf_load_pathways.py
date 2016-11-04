@@ -28,37 +28,36 @@ Functions for the analysis of WRF microphysical pathways
 #       
 #    
 List_Processes_Thompson_Mass=[
-         'PRW_VCD',       
-         'PRV_REV',
-         'PRR_WAU',
-         'PRR_RCW',
-         'PRR_RCS',
-         'PRR_RCG',
-         'PRR_SML',
-         'PRR_GML',
-         'PRR_RCI',        
-         'PRI_INU',       
-         'PRI_IHM',       
-         'PRI_WFZ',      
-         'PRI_RFZ',
-         'PRI_IDE',
-         'PRI_RCI',
-         'PRI_IHA',
-         'PRS_IAU',
-         'PRS_SCI',
-         'PRS_RCS',
-         'PRS_SCW',
-         'PRS_SDE',
-         'PRS_IHM',
-         'PRS_IDE',
-         'PRG_SCW',
-         'PRG_RFZ',
-         'PRG_GDE',
-         'PRG_GCW',
-         'PRG_RCI',
-         'PRG_RCS',
-         'PRG_RCG',
-         'PRG_IHM'                              
+         'PRW_VCD',   #  Vapor->Water  
+         'PRV_REV',   #  Vapor->Water  
+         'PRR_WAU',   #  Vapor->Water  
+         'PRR_RCW',   #  Vapor->Water  
+         'PRR_RCS',   #  Vapor->Water  
+         'PRR_RCG',   #  Rain->Graupel  
+         'PRR_GML',   #  Vapor->Water  
+         'PRR_RCI',   #  Vapor->Water          
+         'PRI_INU',   #  Vapor->Water     
+         'PRI_IHM',   #  Vapor->Water     
+         'PRI_WFZ',   #  Vapor->Water    
+         'PRI_RFZ',   #  Vapor->Water  
+         'PRI_IDE',   #  Vapor->Water  
+         'PRI_RCI',   #  Vapor->Water  
+         'PRI_IHA',   #  Vapor->Water  
+         'PRS_IAU',   #  Vapor->Water  
+         'PRS_SCI',   #  Vapor->Water  
+         'PRS_RCS',   #  Vapor->Water  
+         'PRS_SCW',   #  Vapor->Water  
+         'PRS_SDE',   #  Vapor->Water  
+         'PRS_IHM',   #  Vapor->Water  
+         'PRS_IDE',   #  Vapor->Water  
+         'PRG_SCW',   #  Vapor->Water  
+         'PRG_RFZ',   #  Vapor->Water  
+         'PRG_GDE',   #  Vapor->Water  
+         'PRG_GCW',   #  Vapor->Water  
+         'PRG_RCI',   #  Vapor->Water  
+         'PRG_RCS',   #  Vapor->Water  
+         'PRG_RCG',   #  Rain->Graupel  
+         'PRG_IHM'    #  Graupel->Ice                               
                               ]    
 
 List_Processes_Thompson_Number=[
@@ -96,13 +95,13 @@ List_Processes_Thompson_Number=[
          'PND_GCD'               
                               ]    
 
-def load_wrf_thom_mass_proc(filename):
+def load_wrf_thom_mass_proc(filename,add_coordinates=None):
     from wrfload import loadwrfcube
     Dict={}
     for i_process,process in enumerate(List_Processes_Thompson_Mass):
         print(process)
         if (i_process==0):
-            cube=loadwrfcube(filename,process,add_coordinates=['pz'])
+            cube=loadwrfcube(filename,process,add_coordinates=None)
             cube.rename(process)
             #Cubelist.append(cube)
             Dict[process]=cube
@@ -124,7 +123,7 @@ def load_wrf_thom_number_proc(filename):
     for i_process,process in enumerate(List_Processes_Thompson_Number):
         print(process)
         if (i_process==0):
-            cube=loadwrfcube(filename,process,add_coordinates=['pz'])
+            cube=loadwrfcube(filename,process,add_coordinates=None)
             cube.rename(process)
             #Cubelist.append(cube)
             Dict[process]=cube
@@ -259,44 +258,46 @@ Proclist_Morr_mass_load=[
 Proclist_Morr_mass=list(Proclist_Morr_mass_load)
 Proclist_Morr_mass.append('EPCC')
 
-def load_wrf_morr_mass_proc(filename):
+def load_wrf_morr_mass_proc(filename,add_coordinates=None):
     from wrfload import loadwrfcube
     import numpy as np
     Dict={}
     for i_process,process in enumerate(Proclist_Morr_mass_load):
         print(process)
         if (i_process==0):
-            cube=loadwrfcube(filename,process+'3D',add_coordinates=['pz'])
+            cube=loadwrfcube(filename,process+'3D',add_coordinates=add_coordinates)
             cube.rename(process)
-            #Cubelist.append(cube)
-            Dict[process]=cube
-            z_coord=cube.coord('geopotential')
-            p_coord=cube.coord('pressure')
+            if add_coordinates=='pz':
+                z_coord=cube.coord('geopotential')
+                p_coord=cube.coord('pressure')
             Dict[process]=cube
 
         else:
             print(process)
             if process=='PCC':
-                cube=loadwrfcube(filename,process+'3D', add_coordinates=add_coord_flag)
+                cube=loadwrfcube(filename,process+'3D')
                 cube1=cube[:]
                 cube1.data=np.clip(cube1.data,a_min=-np.inf,a_max=0)            
                 cube1.rename('PCC')
-                cube1.add_aux_coord(z_coord,(0,1,2,3))
-                cube1.add_aux_coord(p_coord,(0,1,2,3))
+                if add_coordinates=='pz':
+                    cube1.add_aux_coord(z_coord,(0,1,2,3))
+                    cube1.add_aux_coord(p_coord,(0,1,2,3))
 
                 Dict['PCC']=cube1
                 cube2=cube[:]
                 cube2.data=np.clip(cube1.data,a_min=0,a_max=np.inf)
                 cube2.rename('EPCC')
-                cube2.add_aux_coord(z_coord,(0,1,2,3))
-                cube2.add_aux_coord(p_coord,(0,1,2,3))
+                if add_coordinates=='pz':
+                    cube2.add_aux_coord(z_coord,(0,1,2,3))
+                    cube2.add_aux_coord(p_coord,(0,1,2,3))
                 Dict['EPCC']=cube2
     
             else:
                 cube=loadwrfcube(filename,process+'3D')
                 cube.rename(process)
-                cube.add_aux_coord(z_coord,(0,1,2,3))
-                cube.add_aux_coord(p_coord,(0,1,2,3))
+                if add_coordinates=='pz':
+                    cube.add_aux_coord(z_coord,(0,1,2,3))
+                    cube.add_aux_coord(p_coord,(0,1,2,3))
                 #Cubelist.append(cube)
                 Dict[process]=cube
 
@@ -338,7 +339,7 @@ Proclist_Morr_number=['NSUBC',
     'NMULTRG,'    
     'NIACRS']
     
-def load_wrf_morr_num_proc(filename):
+def load_wrf_morr_num_proc(filename,add_coordinates=None):
     from wrfload import loadwrfcube
 
  
@@ -347,19 +348,21 @@ def load_wrf_morr_num_proc(filename):
     for i_process,process in enumerate(Proclist_Morr_number):
         print(process)
         if (i_process==0):
-            cube=loadwrfcube(filename,process+'3D',add_coordinates=['pz'])
+            cube=loadwrfcube(filename,process+'3D',add_coordinates=add_coordinates)
             cube.rename(process)
             #Cubelist.append(cube)
-            z_coord=cube.coord('geopotential')
-            p_coord=cube.coord('pressure')
+            if add_coordinates=='pz':
+                z_coord=cube.coord('geopotential')
+                p_coord=cube.coord('pressure')
         else:
             if process=='NSMLTR':
                 cube=loadwrfcube(filename,process)
             else:
                 cube=loadwrfcube(filename,process+'3D')
             cube.rename(process)
-            cube.add_aux_coord(z_coord,(0,1,2,3))
-            cube.add_aux_coord(p_coord,(0,1,2,3))
+            if add_coordinates=='pz':
+                cube.add_aux_coord(z_coord,(0,1,2,3))
+                cube.add_aux_coord(p_coord,(0,1,2,3))
 
         #Cubelist.append(cube)
         Dict[process]=cube
@@ -662,5 +665,144 @@ def calculate_wrf_morr_path_liquidfrozen(filename):
     P_liquidfrozen.rename('PLIQUIDFROZEN')
 
     return P_liquidfrozen    
+
+def sum_cubes(filename,name,list_names):
+    from wrfload import loadwrfcube
+    P_out=loadwrfcube(filename, list_names[0])
+    for name_i in listnames[1:]:
+        P_out=P_out+loadwrfcube(filename, name_i)
+    P_out.rename(name)    
+    return P_out
+
+    
+    
+
+def calculate_wrf_thom_path_VAPORCLOUD(filename):
+    list_names=['']
+    name='P_VAPORCLOUD'
+    return sum_cubes(filename,name,list_names)
+    
+def calculate_wrf_thom_path_VAPORRAIN(filename):
+    #Load and add up all process rates between water vapour and cloud droplets
+    list_names=['']
+    name='P_VAPORRAIN'
+    return sum_cubes(filename,name,list_names)
+    
+def calculate_wrf_thom_path_VAPORICE(filename):
+    #Load and add up all process rates between water vapour and cloud droplets
+    list_names=['']
+    name='P_VAPORICE'
+    return sum_cubes(filename,name,list_names)
+    
+def calculate_wrf_thom_path_VAPORSNOW(filename):
+    list_names=['']
+    name='P_VAPORSNOW'
+    return sum_cubes(filename,name,list_names)
+    
+def calculate_wrf_thom_path_VAPORGRAUP(filename):
+    #Load and add up all process rates between water vapour and cloud droplets
+    list_names=['']
+    name='P_VAPORGRAUPEL'
+    return sum_cubes(filename,name,list_names)
+    
+def calculate_wrf_thom_path_CLOUDRAIN(filename):
+     #Load and add up all process rates between water vapour and cloud droplets
+    list_names=['']
+    name='P_CLOUDRAIN'
+    return sum_cubes(filename,name,list_names)
+    
+    
+def calculate_wrf_thom_path_CLOUDICE(filename):
+    #Load and add up all process rates between ckoud droplets and cloud ice
+    list_names=['']
+    name='P_CLOUDICE'
+    return sum_cubes(filename,name,list_names)
+    
+    
+    
+def calculate_wrf_thom_path_CLOUDSNOW(filename):
+    #Load and add up all process rates between cloud droplets and snow
+    list_names=['']
+    name='P_CLOUDSNOW'
+    return sum_cubes(filename,name,list_names)
+
+def calculate_wrf_thom_path_CLOUDGRAUP(filename):
+    #Load and add up all process rates between cloud droplets and graupel
+    list_names=['']
+    name='P_CLOUDGRAUP'
+    return sum_cubes(filename,name,list_names)
+
+
+def calculate_wrf_thom_path_RAINICE(filename):
+    #Load and add up all process rates between rain and cloud ice
+    list_names=['']
+    name='P_RAINICE'
+    return sum_cubes(filename,name,list_names)
+def calculate_wrf_thom_path_RAINSNOW(filename):
+    #Load and add up all process rates between rain and snow
+    list_names=['']
+    name='P_RAINICE'
+    return sum_cubes(filename,name,list_names)
+
+def calculate_wrf_thom_path_RAINGRAUP(filename):
+    #Load and add up all process rates between rain and graupel
+    list_names=['']
+    name='P_RAINGRAUP'
+    return sum_cubes(filename,name,list_names)
+
+def calculate_wrf_thom_path_ICESNOW(filename):
+    #Load and add up all process rates between cloud ice and snow
+    list_names=['']
+    name='P_ICESNOW'
+    return sum_cubes(filename,name,list_names)
+    
+def calculate_wrf_thom_path_ICEGRAUP(filename):
+    #Load and add up all process rates between cloud ice and graupel
+    list_names=['']
+    name='P_ICEGRAUP'
+    return sum_cubes(filename,name,list_names)
+    
+def calculate_wrf_thom_path_SNOWGRAUP(filename):
+    #Load and add up all process rates between snow and graupel
+    list_names=['']
+    name='P_SNOWGRAUP'
+    return sum_cubes(filename,name,list_names)
+    
+    
+def calculate_wrf_thom_path_vaporliquid(filename):
+    #Load and add up all process rates between ice phase and water vapour:
+    #print('calculate processes deposition/sublimation')
+    PVAPORCLOUD=calculate_wrf_thom_path_VAPORCLOUD(filename)
+    PVAPORRAIN=calculate_wrf_thom_path_VAPORRAIN(filename)  
+    P_vaporliquid=  PVAPORCLOUD + PVAPORRAIN
+    P_vaporliquid.rename('PVAPORLIQUID')
+    return sum_cubes(filename,name,list_names)
+    
+def calculate_wrf_thom_path_vaporfrozen(filename):
+    #Load and add up all process rates between ice phase and water vapour:
+    #print('calculate processes deposition/sublimation')
+    PVAPORICE=calculate_wrf_thom_path_VAPORICE(filename)
+    PVAPORSNOW=calculate_wrf_thom_path_VAPORSNOW(filename)
+    PVAPORGRAUP=calculate_wrf_thom_path_VAPORGRAUP(filename)   
+    P_vaporfrozen=PVAPORICE+PVAPORSNOW+PVAPORGRAUP
+    P_vaporfrozen.rename('PVAPORFROZEN')
+    return P_vaporfrozen    
+    
+def calculate_wrf_thom_path_liquidfrozen(filename):
+    #Load and add up all process rates between frozen and liquid phase
+    #print('calculate processes freezing/melting')
+    PCLOUDICE=calculate_wrf_thom_path_CLOUDICE(filename)
+    PRAINICE=calculate_wrf_thom_path_RAINICE(filename)
+    PCLOUDSNOW=calculate_wrf_thom_path_CLOUDSNOW(filename)
+    PRAINSNOW=calculate_wrf_thom_path_RAINSNOW(filename)
+    PRAINGRAUP=calculate_wrf_thom_path_RAINGRAUP(filename)
+    PCLOUDGRAUP=calculate_wrf_thom_path_CLOUDGRAUP(filename)
+    P_liquidfrozen=PCLOUDICE+PRAINICE+PCLOUDSNOW+PRAINSNOW+PRAINGRAUP+PCLOUDGRAUP
+    P_liquidfrozen.rename('PLIQUIDFROZEN')
+
+    return P_liquidfrozen    
+
+
+    
     
     
