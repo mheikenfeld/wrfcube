@@ -344,6 +344,10 @@ def add_aux_coordinates(filenames, variable,variable_cube,add_coordinates):
     SOUTH_NORTH_PATCH_END_STAG=attributes['SOUTH-NORTH_PATCH_END_STAG']
     #BOTTOM_TOP_PATCH_END_STAG=attributes['BOTTOM-TOP_PATCH_END_STAG']
     coords=variable_cube.coords()
+    if type(add_coordinates)!=list:
+        add_coordinates1=add_coordinates
+        add_coordinates=[]
+        add_coordinates.append(add_coordinates1)
     for coordinate in add_coordinates:
         if coordinate=='xy':
             for dim in range(len(coords)):

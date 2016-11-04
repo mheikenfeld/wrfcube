@@ -267,6 +267,8 @@ def load_wrf_morr_mass_proc(filename,add_coordinates=None):
         if (i_process==0):
             cube=loadwrfcube(filename,process+'3D',add_coordinates=add_coordinates)
             cube.rename(process)
+            print(cube)
+            print(add_coordinates)
             if add_coordinates=='pz':
                 z_coord=cube.coord('geopotential')
                 p_coord=cube.coord('pressure')
@@ -408,21 +410,21 @@ def calculate_wrf_morr_path_phases(filename):
     #return Cubelist
     return Dict
     
-def calculate_wrf_thompson_path(filename,path):
+def calculate_wrf_thompson_path(filename,path,add_coordinates=None):
     if (path=='processes_mass'):
-        out=load_wrf_thom_mass_proc(filename)
+        out=load_wrf_thom_mass_proc(filename,add_coordinates)
     if (path=='processes_number'):
-        out=load_wrf_thom_number_proc(filename)
+        out=load_wrf_thom_number_proc(filename,add_coordinates)
     else:
         print('option not avaliable')
     return out   
 
         
-def calculate_wrf_morr_path(filename,path):
+def calculate_wrf_morr_path(filename,path,add_coordinates=None):
     if (path=='processes_mass'):
-        out=load_wrf_morr_mass_proc(filename)
+        out=load_wrf_morr_mass_proc(filename,add_coordinates)
     if (path=='processes_number'):
-        out=load_wrf_morr_num_proc(filename)
+        out=load_wrf_morr_num_proc(filename,add_coordinates)
     if path=='hydrometeor':
         out=calculate_wrf_morr_path_hydrometeors(filename)
     if path=='phase':
