@@ -95,11 +95,14 @@ List_Processes_Thompson_Number=[
          'PND_GCD'               
                               ]    
 
-def load_wrf_thom_mass_proc(filename,add_coordinates=None):
-    from wrfload import loadwrfcube
+def load_wrf_thom_mass_proc(filename,add_coordinates=None,quantity='volume'):
+    from wrfload import loadwrfcube, derivewrfcube
     Dict={}
+    if quantity=='volume':
+        rho=derivewrfcube(filename,'density')
+        
     for i_process,process in enumerate(List_Processes_Thompson_Mass):
-        print(process)
+        #print(process)
         if (i_process==0):
             cube=loadwrfcube(filename,process,add_coordinates=None)
             cube.rename(process)
@@ -113,15 +116,20 @@ def load_wrf_thom_mass_proc(filename,add_coordinates=None):
             cube.add_aux_coord(z_coord,(0,1,2,3))
             cube.add_aux_coord(p_coord,(0,1,2,3))
         #Cubelist.append(cube)
+        if quantity=='volume':
+            cube=cube*rho
         Dict[process]=cube
     #return Cubelist
     return Dict
  
-def load_wrf_thom_number_proc(filename):
-    from wrfload import loadwrfcube
+def load_wrf_thom_number_proc(filename,add_coordinates=None,quantity='volume'):
+    from wrfload import loadwrfcube, derivewrfcube
     Dict={}
+    if quantity=='volume':
+        rho=derivewrfcube(filename,'density')
+
     for i_process,process in enumerate(List_Processes_Thompson_Number):
-        print(process)
+        #print(process)
         if (i_process==0):
             cube=loadwrfcube(filename,process,add_coordinates=None)
             cube.rename(process)
@@ -135,6 +143,9 @@ def load_wrf_thom_number_proc(filename):
             cube.add_aux_coord(z_coord,(0,1,2,3))
             cube.add_aux_coord(p_coord,(0,1,2,3))
         #Cubelist.append(cube)
+        if quantity=='volume':
+            cube=cube*rho
+
         Dict[process]=cube
     #return Cubelist
     return Dict                     
@@ -258,49 +269,62 @@ Proclist_Morr_mass_load=[
 Proclist_Morr_mass=list(Proclist_Morr_mass_load)
 Proclist_Morr_mass.append('EPCC')
 
-def load_wrf_morr_mass_proc(filename,add_coordinates=None):
-    from wrfload import loadwrfcube
+def load_wrf_morr_mass_proc(filename,add_coordinates=None,quantity='volume'):
     import numpy as np
+    from wrfload import loadwrfcube, derivewrfcube
     Dict={}
+    if quantity=='volume':
+        rho=derivewrfcube(filename,'density')
     for i_process,process in enumerate(Proclist_Morr_mass_load):
-        print(process)
+        #print(process)
         if (i_process==0):
             cube=loadwrfcube(filename,process+'3D',add_coordinates=add_coordinates)
-            cube.rename(process)
-            print(cube)
-            print(add_coordinates)
+            #print(cube)
+            #print(add_coordinates)
             if add_coordinates=='pz':
                 z_coord=cube.coord('geopotential')
                 p_coord=cube.coord('pressure')
+            if quantity=='volume':
+                cube=cube*rho
+            cube.rename(process)
+
             Dict[process]=cube
 
         else:
-            print(process)
+            #print(process)
             if process=='PCC':
                 cube=loadwrfcube(filename,process+'3D')
                 cube1=cube[:]
+                cube2=cube[:]
                 cube1.data=np.clip(cube1.data,a_min=-np.inf,a_max=0)            
-                cube1.rename('PCC')
                 if add_coordinates=='pz':
                     cube1.add_aux_coord(z_coord,(0,1,2,3))
                     cube1.add_aux_coord(p_coord,(0,1,2,3))
-
+                if quantity=='volume':
+                    cube1=cube1*rho                
+                    
+                cube1.rename('PCC')
                 Dict['PCC']=cube1
                 cube2=cube[:]
                 cube2.data=np.clip(cube1.data,a_min=0,a_max=np.inf)
-                cube2.rename('EPCC')
                 if add_coordinates=='pz':
                     cube2.add_aux_coord(z_coord,(0,1,2,3))
                     cube2.add_aux_coord(p_coord,(0,1,2,3))
+                if quantity=='volume':
+                    cube2=cube2*rho
+                cube2.rename('EPCC')
                 Dict['EPCC']=cube2
     
             else:
                 cube=loadwrfcube(filename,process+'3D')
-                cube.rename(process)
                 if add_coordinates=='pz':
                     cube.add_aux_coord(z_coord,(0,1,2,3))
                     cube.add_aux_coord(p_coord,(0,1,2,3))
                 #Cubelist.append(cube)
+                if quantity=='volume':
+                    cube=cube*rho
+                cube.rename(process)
+
                 Dict[process]=cube
 
     #return Cubelist
@@ -341,14 +365,16 @@ Proclist_Morr_number=['NSUBC',
     'NMULTRG,'    
     'NIACRS']
     
-def load_wrf_morr_num_proc(filename,add_coordinates=None):
-    from wrfload import loadwrfcube
+def load_wrf_morr_num_proc(filename,add_coordinates=None,quantity='volume'):
+    from wrfload import loadwrfcube, derivewrfcube
+    Dict={}
+    if quantity=='volume':
+        rho=derivewrfcube(filename,'density')
 
  
     #Cubelist=[]
     Dict={}
     for i_process,process in enumerate(Proclist_Morr_number):
-        print(process)
         if (i_process==0):
             cube=loadwrfcube(filename,process+'3D',add_coordinates=add_coordinates)
             cube.rename(process)
@@ -367,6 +393,9 @@ def load_wrf_morr_num_proc(filename,add_coordinates=None):
                 cube.add_aux_coord(p_coord,(0,1,2,3))
 
         #Cubelist.append(cube)
+        if quantity=='volume':
+            cube=cube*rho
+
         Dict[process]=cube
     #return Cubelist
     return Dict
@@ -410,7 +439,7 @@ def calculate_wrf_morr_path_phases(filename):
     #return Cubelist
     return Dict
     
-def calculate_wrf_thompson_path(filename,path,add_coordinates=None):
+def calculate_wrf_thompson_path(filename,path,add_coordinates=None,quantity='volume'):
     if (path=='processes_mass'):
         out=load_wrf_thom_mass_proc(filename,add_coordinates)
     if (path=='processes_number'):
@@ -420,11 +449,11 @@ def calculate_wrf_thompson_path(filename,path,add_coordinates=None):
     return out   
 
         
-def calculate_wrf_morr_path(filename,path,add_coordinates=None):
+def calculate_wrf_morr_path(filename,path,add_coordinates=None,quantity='volume'):
     if (path=='processes_mass'):
-        out=load_wrf_morr_mass_proc(filename,add_coordinates)
+        out=load_wrf_morr_mass_proc(filename,add_coordinates,quantity)
     if (path=='processes_number'):
-        out=load_wrf_morr_num_proc(filename,add_coordinates)
+        out=load_wrf_morr_num_proc(filename,add_coordinates,quantity)
     if path=='hydrometeor':
         out=calculate_wrf_morr_path_hydrometeors(filename)
     if path=='phase':

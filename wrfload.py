@@ -214,10 +214,20 @@ def calculate_wrf_w_at_T(filename):
     w_at_T = cube.Cube(0.5*(w[:,:-1,:,:].data+w[:,1:,:,:].data),var_name='w',long_name='vertical velocity on T grid', units='m/s')
     return w_at_T
 
-def calculate_wrf_density(filename):    
-    T=calculate_wrf_temperature(filename)
-    p=calculate_wrf_pressure(filename)
-    rho=p/ (287.*T)
+def calculate_wrf_density(filename):
+    from iris import load,coords
+    test_cube=load(filename,'ALT')    
+    if len(test_cube)==1:
+        alt=loadwrfcube(inputfiles,'ALT')
+        rho=alt**(-1)
+    elif len(test_cube)==0:
+        T=calculate_wrf_temperature(filename)
+        p=calculate_wrf_pressure(filename)
+        R=coords.AuxCoord(287.058,long_name='Specific gas constant for air',units='Joule kg^-1 K^-1')
+        rho=p/(R*T)
+    else:
+        print('Error')        
+    rho.rename('density')
     return rho
 #    
 def calculate_wrf_pressure(filename):
