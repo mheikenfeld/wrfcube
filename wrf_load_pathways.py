@@ -329,6 +329,46 @@ def load_wrf_morr_mass_proc(filename,add_coordinates=None,quantity='volume'):
 
     #return Cubelist
     return Dict
+    
+def load_wrf_morr_mass_proc_individual(filename,process,add_coordinates=None,quantity='volume'):
+    import numpy as np
+    from wrfload import loadwrfcube, derivewrfcube
+    Dict={}
+    if quantity=='volume':
+        rho=derivewrfcube(filename,'density')
+
+    if process=='PCC':
+        cube=loadwrfcube(filename,process+'3D',add_coordinates=add_coordinates)
+        cube1=cube.copy()
+        cube2=cube.copy()
+        cube1.data=np.clip(cube1.data,a_min=-np.inf,a_max=0)            
+        if quantity=='volume':
+            cube1=cube1*rho                
+        cube1.rename('PCC')
+        Dict['PCC']=cube1
+        cube2=cube[:]
+        cube2.data=np.clip(cube.data,a_min=0,a_max=np.inf)
+        if quantity=='volume':
+            cube2=cube2*rho
+        cube2.rename('EPCC')
+        Dict['EPCC']=cube2
+
+    else:
+        cube=loadwrfcube(filename,process+'3D',add_coordinates=add_coordinates)
+        if add_coordinates=='pz':
+            cube.add_aux_coord(z_coord,(0,1,2,3))
+            cube.add_aux_coord(p_coord,(0,1,2,3))
+        #Cubelist.append(cube)
+        if quantity=='volume':
+            cube=cube*rho
+        cube.rename(process)
+
+        Dict[process]=cube
+
+    #return Cubelist
+    return Dict    
+    
+    
 
 Proclist_Morr_number=['NSUBC',
     'NSUBI',
