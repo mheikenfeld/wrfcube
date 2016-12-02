@@ -1,23 +1,27 @@
-def loadwrfcube(filenames,variable,add_coordinates=None):
+from datetime import datetime
+
+def loadwrfcube(filenames,variable,add_coordinates=None,slice_time=slice(None)):
+#    print('loading ',variable)
     if type(filenames) is list:
-        variable_cube=loadwrfcube_mult(filenames,variable,add_coordinates)
+        variable_cube=loadwrfcube_mult(filenames,variable,add_coordinates=add_coordinates,slice_time=slice_time)
     elif type(filenames) is str:
-        variable_cube=loadwrfcube_single(filenames,variable,add_coordinates)
+        variable_cube=loadwrfcube_single(filenames,variable,add_coordinates=add_coordinates,slice_time=slice_time)
     else:
         print('Type of input unknown: Must be str of list')
+    variable_cube_data=variable_cube.data
     return variable_cube
     
-def loadwrfcube_single(filenames,variable,add_coordinates=None):
-    from iris import load 
-    variable_cube=load(filenames,variable)[0]
-    variable_cube=addcoordinates(filenames, variable,variable_cube,add_coordinates)        
+def loadwrfcube_single(filenames,variable,add_coordinates=None,slice_time=slice(None)):
+    from iris import load_cube    
+    variable_cube=load_cube(filenames,variable)[slice_time]
+    variable_cube=addcoordinates(filenames, variable,variable_cube,add_coordinates=addcoordinates, slice_time=slice_time)        
     return variable_cube
     
-def loadwrfcube_mult(filenames,variable,add_coordinates=None):
+def loadwrfcube_mult(filenames,variable,add_coordinates=None,slice_time=slice(None)):
     from iris.cube import CubeList
     cube_list=[]
     for i in range(len(filenames)):
-        cube_list.append(loadwrfcube_single(filenames[i],variable,add_coordinates) )
+        cube_list.append(loadwrfcube_single(filenames[i],variable,add_coordinates=add_coordinates,slice_time=slice_time) )
     for member in cube_list:
         member.attributes={}
     variable_cubes=CubeList(cube_list)
@@ -25,53 +29,56 @@ def loadwrfcube_mult(filenames,variable,add_coordinates=None):
     return variable_cube
 
     
-def loadwrfcube_dimcoord(filenames,variable):
-    from iris import load     
-    variable_cube=load(filenames,variable)[0]
+def loadwrfcube_dimcoord(filenames,variable,slice_time=slice(None)):
+    from iris import load_cube     
+    variable_cube=load_cube(filenames,variable)[slice_time]
     for coord in variable_cube.coords():
         variable_cube.remove_coord(coord.name())
-    variable_cube=add_dim_coordinates(filenames, variable,variable_cube)
+    variable_cube=add_dim_coordinates(filenames, variable,variable_cube,slice_time=slice_time)
+    variable_cube_data=variable_cube.data
     return variable_cube
 
     
-def loadwrfcube_nocoord(filenames,variable):
-    from iris import load     
-    variable_cube=load(filenames,variable)[0]
+def loadwrfcube_nocoord(filenames,variable,slice_time=slice(None)):
+    from iris import load_cube   
+    variable_cube=load_cube(filenames,variable)[slice_time]
     for coord in variable_cube.coords():
         variable_cube.remove_coord(coord.name())
+    variable_cube_data=variable_cube.data
     return variable_cube
     
 
-def derivewrfcube(filenames,variable,add_coordinates=None):
+def derivewrfcube(filenames,variable,add_coordinates=None,slice_time=slice(None)):
     if type(filenames) is list:
-        variable_cube=derivewrfcube_mult(filenames,variable,add_coordinates)
+        variable_cube=derivewrfcube_mult(filenames,variable,add_coordinates=add_coordinates,slice_time=slice_time)
     elif type(filenames) is str:
-        variable_cube=derivewrfcube_single(filenames,variable,add_coordinates)
+        variable_cube=derivewrfcube_single(filenames,variable,add_coordinates=add_coordinates,slice_time=slice_time)
     else:
         print('Type of input unknown: Must be str of list')
     return variable_cube
 
-def derivewrfcube_mult(filenames,variable,add_coordinates=None):
+def derivewrfcube_mult(filenames,variable,add_coordinates=None,slice_time=slice(None)):
     from iris.cube import CubeList
     cube_list=[]
     for i in range(len(filenames)):
-        cube_list.append(derivewrfcube_single(filenames[i],variable,add_coordinates) )
+        cube_list.append(derivewrfcube_single(filenames[i],variable,add_coordinates=add_coordinates,slice_time=slice_time) )
     for member in cube_list:
         member.attributes={}
     variable_cubes=CubeList(cube_list)
     variable_cube=variable_cubes.concatenate_cube()
+    variable_cube_data=variable_cube.data
     return variable_cube
 
 
-def derivewrfcube_single(filenames,variable,add_coordinates=None):
+def derivewrfcube_single(filenames,variable,add_coordinates=None,slice_time=slice(None)):
     if variable == 'potential temperature':
-        variable_cube=calculate_wrf_potential_temperature(filenames)
+        variable_cube=calculate_wrf_potential_temperature(filenames,slice_time=slice_time)
         #variable_cube_out=addcoordinates(filenames, 'T',variable_cube,add_coordinates)
     elif variable == 'temperature':
-        variable_cube=calculate_wrf_temperature(filenames)
+        variable_cube=calculate_wrf_temperature(filenames,slice_time=slice_time)
         #variable_cube_out=addcoordinates(filenames, 'T',variable_cube,add_coordinates)
     elif variable == 'density':
-        variable_cube=calculate_wrf_density(filenames)
+        variable_cube=calculate_wrf_density(filenames,slice_time=slice_time)
         #variable_cube_out=addcoordinates(filenames, 'T',variable_cube,add_coordinates)
     elif variable == 'LWC':    
         variable_cube=calculate_wrf_LWC(filenames)
@@ -85,18 +92,25 @@ def derivewrfcube_single(filenames,variable,add_coordinates=None):
     elif variable == 'IWP':    
         variable_cube=calculate_wrf_IWP(filenames)
         #variable_cube=addcoordinates(filenames, 'OLR',variable_cube,add_coordinates)
+    elif variable == 'IWV':    
+        variable_cube=calculate_wrf_IWV(filenames)
+        #variable_cube=addcoordinates(filenames, 'OLR',variable_cube,add_coordinates)
+    elif variable == 'airmass':    
+        variable_cube=calculate_wrf_airmass(filenames)
     elif variable == 'geopotential':    
-        variable_cube=calculate_wrf_geopotential(filenames)
-        variable_cube=addcoordinates(filenames, 'QICE',variable_cube,add_coordinates)
+        variable_cube=calculate_wrf_geopotential(filenames,slice_time=slice_time)
+        variable_cube=remove_all_coordinates(variable_cube)
+        variable_cube=addcoordinates(filenames, 'QICE',variable_cube,add_coordinates=add_coordinates,slice_time=slice_time)
     elif variable == 'pressure':    
-        variable_cube=calculate_wrf_pressure(filenames)
-        variable_cube=addcoordinates(filenames, 'T',variable_cube,add_coordinates)
+        variable_cube=calculate_wrf_pressure(filenames,slice_time=slice_time)
+        #variable_cube=addcoordinates(filenames, 'T',variable_cube,add_coordinates=add_coordinates,slice_time=slice_time)
+        #print(variable_cube)
     elif variable == 'relative humidity':    
         variable_cube=calculate_wrf_relativehumidity(filenames)
         #variable_cube_out=addcoordinates(filenames, 'T',variable_cube,add_coordinates)
     elif variable == 'w_at_T':    
         variable_cube=calculate_wrf_w_at_T(filenames)
-        variable_cube=addcoordinates(filenames, 'T',variable_cube,add_coordinates)
+        variable_cube=addcoordinates(filenames, 'T',variable_cube,add_coordinates=add_coordinates,slice_time=slice_time)
     elif variable == 'surface precipitation':
         variable_cube=calculate_wrf_surface_precipitation(filenames)
         #variable_cube_out=addcoordinates(filenames, 'T',variable_cube,add_coordinates)
@@ -117,34 +131,36 @@ def calculate_wrf_surface_precipitation(filenames):
     RAINNC_inst.units= 'mm/h'
     return RAINNC_inst
 
+def variable_list(filenames):
+    from netCDF4 import Dataset
+    variable_list = list(Dataset(filenames).variables)
+    return variable_list
 
-def calculate_wrf_potential_temperature(filename):
+def calculate_wrf_potential_temperature(filenames,slice_time=slice(None)):
     from iris import coords
-    THETA= loadwrfcube(filename, 'T')
-    T0 = coords.AuxCoord(300.0,long_name='reference_Temperature',units='K')
-    theta=THETA+T0;
-    theta.rename('Potential temperature')
-    theta.attributes=THETA.attributes
+    T= loadwrfcube(filenames, 'T',slice_time=slice_time)
+    T0 = coords.AuxCoord(300.0,long_name='reference_Temperature', units='K')
+    theta=T+T0;
+    theta.rename('potential temperature')
     return theta
     
-def calculate_wrf_temperature(filename):
-    from iris import coords
-    theta= calculate_wrf_potential_temperature(filename)
-    p = calculate_wrf_pressure(filename)
+def calculate_wrf_temperature(filenames,slice_time=slice(None)):
+    from iris import coords, cube
+    theta= calculate_wrf_potential_temperature(filenames,slice_time=slice_time)  
+    p = derivewrfcube(filenames,'pressure',slice_time=slice_time)
     p0 =coords.AuxCoord(1000.0,long_name='reference_pressure', units='hPa')
     p0.convert_units(p.units)
     p1=p/p0
-    T=theta
-    T.data=theta.data*(p1.data**(287.05 / 1005))
-    T.rename('temperature')
-    T.attributes=theta.attributes
+    exp=(287.05 / 1005.0)
+    T=theta*(p1**exp) #work around iris issue here by loading one of the cubes into numpy array..
+    T.rename('air_temperature')
     return T
     
-def calculate_wrf_relativehumidity(filename):
+def calculate_wrf_relativehumidity(filenames,slice_time=slice(None)):
     from iris import cube
-    QVAPOR=loadwrfcube(filename, 'QVAPOR').data
-    T=calculate_wrf_temperature(filename).data
-    p=calculate_wrf_pressure(filename)
+    QVAPOR=loadwrfcube(filenames, 'QVAPOR',slice_time=slice_time).data
+    T=calculate_wrf_temperature(filenames,slice_time=slice_time).data
+    p=calculate_wrf_pressure(filenames,slice_time=slice_time)
     p.convert_units('Pa')
     p=p.data
     rh=calculate_RH(QVAPOR,T,p)
@@ -158,147 +174,153 @@ def calculate_RH(QVAPOR,T,p):
     RH = 100*maximum(minimum(QVAPOR/QVS,1.0),0.0)
     return RH   
     
-def calculate_wrf_LWC(filename):
-    QCLOUD=loadwrfcube(filename, 'QCLOUD')
-    QRAIN=loadwrfcube(filename, 'QRAIN')
+def calculate_wrf_LWC(filenames):
+    QCLOUD=loadwrfcube(filenames, 'QCLOUD')
+    QRAIN=loadwrfcube(filenames, 'QRAIN')
     LWC=QCLOUD+QRAIN
-    LWC.rename('Liquid water content')
+    LWC.rename('liquid water content')
     return LWC   
 #    
-def calculate_wrf_IWC(filename):    
-    QICE=loadwrfcube(filename, 'QICE')
-    QSNOW=loadwrfcube(filename, 'QSNOW')
-    QGRAUP=loadwrfcube(filename, 'QGRAUP')
+def calculate_wrf_IWC(filenames):    
+    QICE=loadwrfcube(filenames, 'QICE')
+    QSNOW=loadwrfcube(filenames, 'QSNOW')
+    QGRAUP=loadwrfcube(filenames, 'QGRAUP')
     IWC=QICE+QSNOW+QGRAUP
     IWC.rename('Ice water content')
     return IWC
     
-def calculate_wrf_LWP(filename):
-    from iris import cube, coords    
-    import numpy as np    
-    LWC=calculate_wrf_LWC(filename)
-    rho=calculate_wrf_density(filename)
-    z_h=calculate_wrf_geopotential_stag(filename)
-    LWP=cube.Cube(np.sum(((LWC)*rho*(z_h[:,1:,:,:]-z_h[:,0:-1,:,:])).data,axis=1),long_name='liquid water path', var_name='liquid_water_path', units='kg m^-2')
-    lat_coord=coords.AuxCoord(LWC.coords('latitude')[0].points, standard_name='latitude', long_name='latitude', var_name='latitude', units='degrees', bounds=None, attributes=None, coord_system=None)
-    lon_coord=coords.AuxCoord(LWC.coords('longitude')[0].points, standard_name='longitude', long_name='longitude', var_name='longitude', units='degrees', bounds=None, attributes=None, coord_system=None) 
-    LWP.add_aux_coord(lat_coord,(0,1,2))
-    LWP.add_aux_coord(lon_coord,(0,1,2))            
-
+def calculate_wrf_airmass(filenames):
+    rho=calculate_wrf_density(filenames)
+    z_h=calculate_wrf_geopotential_stag(filenames)
+    Airmass=rho*(z_h[:,1:,:,:].data-z_h[:,0:-1,:,:].data)
+    Airmass.rename('mass of air')
+    return Airmass
+    
+def calculate_wrf_LWP(filenames):
+    from iris.analysis import SUM
+    LWC=calculate_wrf_LWC(filenames)
+    Airmass=calculate_wrf_airmass(filenames)
+    LWP=(LWC*Airmass).collapsed(('bottom_top'),SUM)
+    LWP.rename('liquid water path')
     return LWP   
 #    
-def calculate_wrf_IWP(filename):    
-    from iris import cube, coords    
-    import numpy as np    
-    IWC=calculate_wrf_IWC(filename)
-    rho=calculate_wrf_density(filename)
-    z_h=calculate_wrf_geopotential_stag(filename)
-    IWP=cube.Cube(np.sum((IWC*rho*(z_h[:,1:,:,:]-z_h[:,0:-1,:,:])).data,axis=1),long_name='ice water path', var_name='ice_water_path', units='kg m^-2')
-    lat_coord=coords.AuxCoord(IWC.coords('latitude')[0].points, standard_name='latitude', long_name='latitude', var_name='latitude', units='degrees', bounds=None, attributes=None, coord_system=None)
-    lon_coord=coords.AuxCoord(IWC.coords('longitude')[0].points, standard_name='longitude', long_name='longitude', var_name='longitude', units='degrees', bounds=None, attributes=None, coord_system=None) 
-    IWP.add_aux_coord(lat_coord,(0,1,2))
-    IWP.add_aux_coord(lon_coord,(0,1,2))            
-
+def calculate_wrf_IWP(filenames):    
+    from iris.analysis import SUM
+    IWC=calculate_wrf_IWC(filenames)
+    Airmass=calculate_wrf_airmass(filenames)
+    IWP=(IWC*Airmass).collapsed(('bottom_top'),SUM)
+    IWP.rename('ice water path')
     return IWP
     
-def calculate_wrf_maximum_reflectivity(filename):
+def calculate_wrf_IWV(filenames):    
+    from iris.analysis import SUM
+    QVAPOR=loadwrfcube(filenames,'QVAPOR')
+    Airmass=calculate_wrf_airmass(filenames)
+    IWV=(QVAPOR*Airmass).collapsed(('bottom_top'),SUM)
+    IWV.rename('integrated water vapor')
+    return IWV
+    
+def calculate_wrf_maximum_reflectivity(filenames):
     from iris.analysis import MAX
-    REFL_10CM=loadwrfcube(filename,'REFL_10CM')
+    REFL_10CM=loadwrfcube(filenames,'REFL_10CM')
     MAX_REFL_10CM=REFL_10CM.collapsed('bottom_top', MAX)
     MAX_REFL_10CM.rename('maximum reflectivity')
     return MAX_REFL_10CM
     
-def calculate_wrf_w_at_T(filename):
+def calculate_wrf_w_at_T(filenames):
     from iris import cube
-    w=loadwrfcube(filename, 'W')
+    w=loadwrfcube(filenames, 'W')
     w_at_T = cube.Cube(0.5*(w[:,:-1,:,:].data+w[:,1:,:,:].data),var_name='w',long_name='vertical velocity on T grid', units='m/s')
     return w_at_T
 
-def calculate_wrf_density(filename):
-    from iris import load,coords
-    test_cube=load(filename,'ALT')    
-    if len(test_cube)==1:
-        alt=loadwrfcube(inputfiles,'ALT')
+def calculate_wrf_density(filenames,slice_time=slice(None)):
+    from iris import coords
+    if ('ALT' in variable_list(filenames)):
+        alt=loadwrfcube(filenames,'ALT',slice_time=slice_time)
         rho=alt**(-1)
-    elif len(test_cube)==0:
-        T=calculate_wrf_temperature(filename)
-        p=calculate_wrf_pressure(filename)
-        R=coords.AuxCoord(287.058,long_name='Specific gas constant for air',units='Joule kg^-1 K^-1')
-        rho=p/(R*T)
-    else:
-        print('Error')        
-    rho.rename('density')
+    else: 
+       R=coords.AuxCoord(287.058,long_name='Specific gas constant for air',units='Joule kg^-1 K^-1')
+       T=calculate_wrf_temperature(filenames,slice_time=slice_time)
+       p=derivewrfcube(filenames,'pressure',slice_time=slice_time)
+       rho=p*((R*T)**-1)
+       rho.rename('air_density')
     return rho
 #    
-def calculate_wrf_pressure(filename):
-    P= loadwrfcube_nocoord(filename, 'P')
-    PB= loadwrfcube_nocoord(filename, 'PB')
-    p=P + PB
+def calculate_wrf_pressure(filenames,slice_time=slice(None)):
+    P= loadwrfcube(filenames, 'P',slice_time=slice_time)
+    PB= loadwrfcube(filenames, 'PB',slice_time=slice_time)
+    p=P + PB 
     p.rename('pressure')
     return p
     
     #    
-def calculate_wrf_pressure_xstag(filename):
-    p=calculate_wrf_pressure(filename)
+def calculate_wrf_pressure_xstag(filenames):
+    p=calculate_wrf_pressure(filenames)
     p_xstag = 0.5*(p[:,:,:-1,:]+p[:,:,1:,:])
     p_xstag.rename('pressure')
     return p
 
 #    
-def calculate_wrf_pressure_ystag(filename):
-    p=calculate_wrf_pressure(filename)
+def calculate_wrf_pressure_ystag(filenames):
+    p=calculate_wrf_pressure(filenames)
     p_ystag = 0.5*(p[:,:,:-1,:]+p[:,:,1:,:])
     p_ystag.rename('pressure')
     return p_ystag
 
     
-def calculate_wrf_pressure_stag(filename):
-    PH= loadwrfcube_nocoord(filename, 'PH')
-    PHB= loadwrfcube_nocoord(filename,'PHB')
+def calculate_wrf_pressure_stag(filenames,slice_time=slice(None)):
+    PH= loadwrfcube(filenames, 'PH',slice_time=slice_time)
+    PHB= loadwrfcube(filenames,'PHB',slice_time=slice_time)
     pH=PH + PHB
     pH.rename('pressure')
     return pH
     
     
     
-def calculate_wrf_geopotential_stag(filename):
+def calculate_wrf_geopotential_stag(filenames,slice_time=slice(None)):
     from iris import coords
-    pH=calculate_wrf_pressure_stag(filename)
+    pH=calculate_wrf_pressure_stag(filenames,slice_time=slice_time)
     g = coords.AuxCoord(9.81,long_name='acceleration', units='m s^-2')
     zH=pH/g
     zH.rename('geopotential')
     return zH
 
-def calculate_wrf_geopotential(filename):
-    zH=calculate_wrf_geopotential_stag(filename)
-    z = 0.5*(zH[:,:-1,:,:]+zH[:,1:,:,:])
+def calculate_wrf_geopotential(filenames,slice_time=slice(None)):
+    zH=calculate_wrf_geopotential_stag(filenames,slice_time=slice_time)
+    z = 0.5*(zH[:,:-1,:,:]+zH.data[:,1:,:,:])
     z.rename('geopotential')
     return z
     
-def calculate_wrf_geopotential_ystag(filename):
-    z=calculate_wrf_geopotential(filename)
+def calculate_wrf_geopotential_ystag(filenames):
+    z=calculate_wrf_geopotential(filenames)
     z_ystag = 0.5*(z[:,:,:-1,:]+z[:,:,1:,:])
     z_ystag.rename('geopotential')
     return z_ystag
     
-def calculate_wrf_geopotential_xstag(filename):
-    z=calculate_wrf_geopotential(filename)
+def calculate_wrf_geopotential_xstag(filenames):
+    z=calculate_wrf_geopotential(filenames)
     z_xstag = 0.5*(z[:,:,:,:-1]+z[:,:,:,1:])
     z_xstag.rename('geopotential')
     return z_xstag
 
-def addcoordinates(filenames, variable,variable_cube,add_coordinates=None):
+def remove_all_coordinates(variable_cube):
+    for coordinate in variable_cube.coords():
+        variable_cube.remove_coord(coordinate.name())
+    return variable_cube    
+    
+    
+def addcoordinates(filenames, variable,variable_cube,add_coordinates=None,slice_time=slice(None)):
     if add_coordinates==None:
-        variable_cube=add_dim_coordinates(filenames, variable,variable_cube)
+        variable_cube=add_dim_coordinates(filenames, variable,variable_cube,slice_time=slice_time)
     else:
-        variable_cube=add_dim_coordinates(filenames, variable,variable_cube)
+        variable_cube=add_dim_coordinates(filenames, variable,variable_cube,slice_time=slice_time)
         variable_cube=add_aux_coordinates(filenames, variable,variable_cube,add_coordinates)
     return variable_cube
 
-def add_dim_coordinates(filenames, variable,variable_cube):
+def add_dim_coordinates(filenames, variable,variable_cube,slice_time=slice(None)):
     from netCDF4 import Dataset  # http://code.google.com/p/netcdf4-python/
-    from iris import load
-    variable_cube_dim= load(filenames, variable)[0]
+    from iris import load_cube
+    variable_cube_dim= load_cube(filenames, variable)
     attributes=variable_cube_dim.attributes
     nc_id=Dataset(filenames)
     nc_variable=nc_id.variables[variable]
@@ -314,7 +336,7 @@ def add_dim_coordinates(filenames, variable,variable_cube):
     BOTTOM_TOP_PATCH_END_STAG=attributes['BOTTOM-TOP_PATCH_END_STAG']
     for dim in range(len(variable_dimensions)):
         if (variable_dimensions[dim]=='Time'):
-           time=make_time_coord(filenames)
+           time=make_time_coord(filenames,slice_time=slice_time)
            variable_cube.add_dim_coord(time,dim)
         elif (variable_dimensions[dim]=='west_east'):
             west_east=make_westeast_coord(DX,WEST_EAST_PATCH_END_UNSTAG)
@@ -338,8 +360,8 @@ def add_dim_coordinates(filenames, variable,variable_cube):
     
 def add_aux_coordinates(filenames, variable,variable_cube,add_coordinates):
     from netCDF4 import Dataset  # http://code.google.com/p/netcdf4-python/
-    from iris import load
-    variable_cube_dim= load(filenames, variable)[0]
+    from iris import load_cube
+    variable_cube_dim= load_cube(filenames, variable)
     attributes=variable_cube_dim.attributes
     nc_id=Dataset(filenames)
     nc_variable=nc_id.variables[variable]
@@ -465,12 +487,12 @@ def add_aux_coordinates(filenames, variable,variable_cube,add_coordinates):
                 print("no lat/lon coordinates added")
     return variable_cube
     
-def make_time_coord(filename):
-    from iris import load,coords
+def make_time_coord(filenames,slice_time=slice(None)):
+    from iris import load_cube,coords
     from datetime import datetime,timedelta
     from numpy import empty
-    Times= load(filename, 'Times')
-    filetimes = Times[0].data
+    Times= load_cube(filenames, 'Times')
+    filetimes = Times.data[slice_time]
     filetimelist = []   # Will contain list of times in seconds since model start time in file.
     timeobjlist = []    # Will contain list of corresponding datetime objects
     for i, filetime in enumerate(filetimes):
@@ -562,89 +584,89 @@ def make_y_stag_coord(DY,SOUTH_NORTH_PATCH_END_STAG):
     #y_stag_coord.add_dim_coord(south_north_stag,0)
     return y_stag_coord
     
-def make_z_coordinate(filename,coordinates):
+def make_z_coordinate(filenames,coordinates):
     from iris import coords
-    z=calculate_wrf_geopotential(filename)    
+    z=calculate_wrf_geopotential(filenames)    
     z_coord=coords.AuxCoord(z.data, standard_name=None, long_name='geopotential', var_name='z', units='m', bounds=None, attributes=None, coord_system=None)
     return z_coord
 
-def make_z_xstag_coordinate(filename):
+def make_z_xstag_coordinate(filenames):
     from iris import coords
-    z=calculate_wrf_geopotential_xstag(filename)
+    z=calculate_wrf_geopotential_xstag(filenames)
     z_coord=coords.AuxCoord(z.data, standard_name=None, long_name='z', var_name='z', units='m', bounds=None, attributes=None, coord_system=None)
     return z_coord
     
-def make_z_ystag_coordinate(filename):  
+def make_z_ystag_coordinate(filenames):  
     from iris import coords
-    z=calculate_wrf_geopotential_ystag(filename)
+    z=calculate_wrf_geopotential_ystag(filenames)
     z_coord=coords.AuxCoord(z.data, standard_name=None, long_name='z', var_name='z', units='m', bounds=None, attributes=None, coord_system=None)
     return z_coord
     
     
-def make_z_stag_coordinate(filename):
+def make_z_stag_coordinate(filenames):
     from iris import coords
-    z=calculate_wrf_geopotential_stag(filename)
+    z=calculate_wrf_geopotential_stag(filenames)
     z_coord=coords.AuxCoord(z.data, standard_name=None, long_name='z', var_name='z', units='m', bounds=None, attributes=None, coord_system=None)
     return z_coord
     
-def make_p_coordinate(filename,coordinates):
+def make_p_coordinate(filenames,coordinates):
     from iris import coords
-    p=calculate_wrf_pressure(filename)
+    p=calculate_wrf_pressure(filenames)
     p_coord=coords.AuxCoord(p.data, standard_name=None, long_name='pressure', var_name='pressure', units='Pa', bounds=None, attributes=None, coord_system=None)
     return p_coord
 
-def make_p_xstag_coordinate(filename):
+def make_p_xstag_coordinate(filenames):
     from iris import coords
-    p=calculate_wrf_pressure_xstag(filename)
+    p=calculate_wrf_pressure_xstag(filenames)
     p_coord=coords.AuxCoord(p.data, standard_name=None, long_name='pressure', var_name='pressure', units='Pa', bounds=None, attributes=None, coord_system=None)
     return p_coord
     
-def make_p_ystag_coordinate(filename):  
+def make_p_ystag_coordinate(filenames):  
     from iris import coords
-    p=calculate_wrf_pressure_ystag(filename)
+    p=calculate_wrf_pressure_ystag(filenames)
     p_coord=coords.AuxCoord(p.data, standard_name=None, long_name='pressure', var_name='pressure', units='Pa', bounds=None, attributes=None, coord_system=None)
     return p_coord
     
     
-def make_p_stag_coordinate(filename):
+def make_p_stag_coordinate(filenames):
     from iris import coords
-    p=calculate_wrf_pressure_stag(filename)
+    p=calculate_wrf_pressure_stag(filenames)
     p_coord=coords.AuxCoord(p.data, standard_name=None, long_name='pressure', var_name='pressure', units='Pa', bounds=None, attributes=None, coord_system=None)
     return p_coord
     
-def make_lon_coordinate(filename):
+def make_lon_coordinate(filenames):
     from iris import coords
-    lon= loadwrfcube(filename, 'XLONG')
+    lon= loadwrfcube(filenames, 'XLONG')
     lon_coord=coords.AuxCoord(lon.data, standard_name=None, long_name='longitude', var_name='longitude', units='degrees', bounds=None, attributes=None, coord_system=None)
     return lon_coord
     
-def make_lat_coordinate(filename):
+def make_lat_coordinate(filenames):
     from iris import coords
-    lat= loadwrfcube(filename, 'XLAT')
+    lat= loadwrfcube(filenames, 'XLAT')
     lat_coord=coords.AuxCoord(lat.data, standard_name=None, long_name='latitude', var_name='latitude', units='degrees', bounds=None, attributes=None, coord_system=None)
     return lat_coord
     
-def make_lon_xstag_coordinate(filename):
+def make_lon_xstag_coordinate(filenames):
     from iris import coords
-    lon= loadwrfcube(filename, 'XLONG_U')
+    lon= loadwrfcube(filenames, 'XLONG_U')
     lon_coord=coords.AuxCoord(lon.data, standard_name=None, long_name='longitude', var_name='longitude', units='degrees', bounds=None, attributes=None, coord_system=None)
     return lon_coord
     
-def make_lat_xstag_coordinate(filename):
+def make_lat_xstag_coordinate(filenames):
     from iris import coords
-    lat= loadwrfcube(filename, 'XLAT_U')
+    lat= loadwrfcube(filenames, 'XLAT_U')
     lat_coord=coords.AuxCoord(lat.data, standard_name=None, long_name='latitude', var_name='latitude', units='degrees', bounds=None, attributes=None, coord_system=None)
     return lat_coord
 
-def make_lon_ystag_coordinate(filename):
+def make_lon_ystag_coordinate(filenames):
     from iris import coords
-    lon= loadwrfcube(filename, 'XLONG_V')
+    lon= loadwrfcube(filenames, 'XLONG_V')
     lon_coord=coords.AuxCoord(lon.data, standard_name=None, long_name='longitude', var_name='longitude', units='degrees', bounds=None, attributes=None, coord_system=None)
     return lon_coord
     
-def make_lat_ystag_coordinate(filename):
+def make_lat_ystag_coordinate(filenames):
     from iris import coords
-    lat= loadwrfcube(filename, 'XLAT_V')
+    lat= loadwrfcube(filenames, 'XLAT_V')
     lat_coord=coords.AuxCoord(lat.data, standard_name=None, long_name='latitude', var_name='latidude', units='degrees', bounds=None, attributes=None, coord_system=None)
     return  lat_coord
 
