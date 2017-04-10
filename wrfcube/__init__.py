@@ -1,1 +1,1 @@
-from wrfcube import loadwrfcube, derivewrfcube, load
+from wrfcube.wrfcube import loadwrfcube, derivewrfcube, load
