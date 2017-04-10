@@ -1,3 +1,33 @@
+def load(filenames,variable,mode='auto',**kwargs):
+    if mode=='auto':
+        variable_list_file=variable_list(filenames)
+        if variable in variable_list_file:
+            variable_cube=loadwrfcube(filenames,variable,**kwargs)
+        elif variable in variable_list_derive:
+            variable_cube=derivewrfcube(filenames,variable,**kwargs)
+        elif variable in variable_dict_pseudonym.keys:
+            variable_load=variable_dict_pseudonym[variable]
+            variable_cube=loadwrfcube(filenames,variable_load,**kwargs)
+
+            
+        
+    elif mode=='file':
+        variable_list_file=variable_list(filenames)
+        if variable in variable_list_file:
+            variable_cube=loadwrfcube(filenames,variable,**kwargs)
+    elif mode=='derive':
+        variable_cube=derivewrfcube(filenames,variable,**kwargs)
+    elif mode=='pseudonym':
+        variable_load=variable_dict_pseudonym[variable]
+        variable_cube=loadwrfcube(filenames,variable_load,**kwargs)
+    else:
+        print('unknown mode')
+
+    return variable_cube
+
+
+
+
 def loadwrfcubelist(filenames,variable_list,**kwargs):
     from iris.cube import CubeList
     cubelist_out=CubeList()  
@@ -95,14 +125,37 @@ def derivewrfcubelist(filenames,variable_list,**kwargs):
 #
 #    return variable_cube
 
+variable_dict_pseudonym={}
+variable_dict_pseudonym['radar_relfectivity']='REFL10CM'
+
+
+
+
+variable_list_derive=[
+        'potential temperature',
+        'temperature','air_temperature',
+        'density'
+        'LWC',
+        'IWC',
+        'LWP',
+        'IWP',
+        'IWV',
+        'airmass',
+        'layer_height',
+        'geopotential_height',
+        'pressure',
+        'relative_humidity',
+        'w_at_T',
+        'maximum reflectivity'   
+        ]
+
 
 #def derivewrfcube_single(filenames,variable,**kwargs):
 def derivewrfcube(filenames,variable,**kwargs):
-
     if variable == 'potential temperature':
         variable_cube=calculate_wrf_potential_temperature(filenames,**kwargs)
         #variable_cube_out=addcoordinates(filenames, 'T',variable_cube,add_coordinates)
-    elif variable == 'temperature':
+    elif variable == 'temperature' or 'air_temperature':
         variable_cube=calculate_wrf_temperature(filenames,**kwargs)
         #variable_cube_out=addcoordinates(filenames, 'T',variable_cube,add_coordinates)
     elif variable == 'density':
@@ -162,7 +215,7 @@ def derivewrfcube(filenames,variable,**kwargs):
         replace_cube=loadwrfcube(filenames,'V',**kwargs)
         variable_cube=replacecoordinates(variable_cube,replace_cube)  
 
-    elif variable == 'relative humidity':    
+    elif variable == 'relative_humidity':    
         variable_cube=calculate_wrf_relativehumidity(filenames,**kwargs)
         #variable_cube_out=addcoordinates(filenames, 'T',variable_cube,add_coordinates)
     elif variable == 'w_at_T':    
