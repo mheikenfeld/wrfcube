@@ -37,6 +37,9 @@ def loadwrfcubelist(filenames,variable_list,**kwargs):
 
 
 def loadwrfcube(filenames,variable,**kwargs):
+#    print(' in loadwrfcube: filenames= ',filenames)
+#    print(' in loadwrfcube: variable= ',variable)
+
     if type(filenames) is list:
         variable_cube=loadwrfcube_mult(filenames,variable,**kwargs)
     elif type(filenames) is str:
@@ -49,11 +52,6 @@ def loadwrfcube(filenames,variable,**kwargs):
     
 def loadwrfcube_single(filenames,variable,constraint=None,slice_time=slice(None),add_coordinates=None):
     from iris import load_cube 
-    #print(' in loadwrfcube_single: variable=' ,variable)
-
-    #print(' in loadwrfcube_single:' ,constraint)
-    #print(filenames)
-    #print(variable)
     variable_cube=load_cube(filenames,variable)[slice_time]
     variable_cube=addcoordinates(filenames, variable,variable_cube,add_coordinates=add_coordinates, slice_time=slice_time)        
     variable_cube=variable_cube.extract(constraint)
@@ -64,6 +62,8 @@ def loadwrfcube_mult(filenames,variable,constraint=None,slice_time=slice(None),a
     from iris.cube import CubeList
     #print(' in loadwrfcube_mult:',constraint)
     cube_list=[]
+#    print(' in loadwrfcube_mult: filenames= ',filenames)
+#    print(' in loadwrfcube_mult: variable= ',variable)
     for i in range(len(filenames)):
         cube_list.append(loadwrfcube_single(filenames[i],variable,add_coordinates=add_coordinates) )
     for member in cube_list:
@@ -155,7 +155,7 @@ def derivewrfcube(filenames,variable,**kwargs):
     if variable == 'potential temperature':
         variable_cube=calculate_wrf_potential_temperature(filenames,**kwargs)
         #variable_cube_out=addcoordinates(filenames, 'T',variable_cube,add_coordinates)
-    elif variable == 'temperature' or 'air_temperature':
+    elif variable in ['temperature','air_temperature']:
         variable_cube=calculate_wrf_temperature(filenames,**kwargs)
         #variable_cube_out=addcoordinates(filenames, 'T',variable_cube,add_coordinates)
     elif variable == 'density':
@@ -274,12 +274,12 @@ def calculate_wrf_temperature(filenames,**kwargs):
     
 def calculate_wrf_relativehumidity(filenames,**kwargs):
     from iris import cube
-    QVAPOR=loadwrfcube(filenames, 'QVAPOR',**kwargs).data
-    T=derivewrfcube(filenames,'temperature',**kwargs).data
-    p=derivewrfcube(filenames,'pressure',**kwargs).data
+    QVAPOR=loadwrfcube(filenames, 'QVAPOR',**kwargs)
+    T=derivewrfcube(filenames,'temperature',**kwargs)
+    p=derivewrfcube(filenames,'pressure',**kwargs)
     p.convert_units('Pa')
     p=p.data
-    rh=calculate_RH(QVAPOR,T,p)
+    rh=calculate_RH(QVAPOR.data,T.data,p.data)
     RH=cube.Cube(rh, units='percent',long_name='realtive humidity')
     return RH   
     
@@ -298,7 +298,7 @@ def calculate_wrf_LWC(filenames,**kwargs):
     #LWC.rename('mass_concentration_of_liquid_water_in_air')
     return LWC   
 #    
-def calculate_wrf_IWC(filenames,**kwargs):    
+def calculate_wrf_IWC(filenames,**kwargs):     
     QICE=loadwrfcube(filenames, 'QICE',**kwargs)
     QSNOW=loadwrfcube(filenames, 'QSNOW',**kwargs)
     QGRAUP=loadwrfcube(filenames, 'QGRAUP',**kwargs)
@@ -317,14 +317,10 @@ def calculate_wrf_airmass(filenames,**kwargs):
     
     
 def calculate_wrf_layerheight(filenames,**kwargs):
-    z_h=derivewrfcube(filenames,'geopotential_height_stag',**kwargs)
-    dim=z_h.coord_dims('bottom_top_stag')[0]
-    ndim=z_h.ndim
-    idx1 = [slice(None)] * (ndim)
-    idx2 = [slice(None)] * (ndim)
-    idx1[dim]=slice(1,None)
-    idx2[dim]=slice(None,-1)
-    layer_height=z_h[tuple(idx1)]-z_h[tuple(idx2)].data
+    from iris import Constraint
+    zH=derivewrfcube(filenames,'geopotential_height_stag',**kwargs)
+    bottom_top_stag=zH.coord('bottom_top_stag').points
+    layer_height = (zH.extract(Constraint(bottom_top_stag=bottom_top_stag[1:]))-zH.extract(Constraint(bottom_top_stag=bottom_top_stag[:-1])).data) 
     layer_height.rename('layer_height')
     replace_cube=loadwrfcube(filenames,'T',**kwargs)
     layer_height=replacecoordinates(layer_height,replace_cube)
