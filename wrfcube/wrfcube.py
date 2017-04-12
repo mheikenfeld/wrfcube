@@ -132,7 +132,7 @@ variable_dict_pseudonym['radar_relfectivity']='REFL10CM'
 
 
 variable_list_derive=[
-        'potential temperature',
+        'potential_temperature',
         'temperature','air_temperature',
         'density'
         'LWC',
@@ -146,7 +146,8 @@ variable_list_derive=[
         'pressure',
         'relative_humidity',
         'w_at_T',
-        'maximum reflectivity'   
+        'maximum_reflectivity' ,
+        'surface_precipitation'
         ]
 
 
@@ -222,7 +223,7 @@ def derivewrfcube(filenames,variable,**kwargs):
         variable_cube=calculate_wrf_w_at_T(filenames,**kwargs)
         replace_cube=loadwrfcube(filenames,'T',**kwargs)
         variable_cube=replacecoordinates(variable_cube,replace_cube)        
-    elif variable == 'surface precipitation':
+    elif variable == 'surface_precipitation':
         variable_cube=calculate_wrf_surface_precipitation(filenames,**kwargs)
         #variable_cube_out=addcoordinates(filenames, 'T',variable_cube,add_coordinates)
     elif variable == 'maximum reflectivity':    
