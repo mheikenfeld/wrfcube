@@ -576,9 +576,9 @@ def replacecoordinates(variable_cube,replace_cube):
 def addcoordinates(filenames, variable,variable_cube,**kwargs):
     add_coordinates=kwargs['add_coordinates']
     if add_coordinates==None:
-        variable_cube=add_dim_coordinates(filenames, variable,**kwargs)
+        variable_cube=add_dim_coordinates(filenames, variable,variable_cube,**kwargs)
     else:
-        variable_cube=add_dim_coordinates(filenames, variable,**kwargs)
+        variable_cube=add_dim_coordinates(filenames, variable,variable_cube,**kwargs)
         variable_cube=add_aux_coordinates_1dim(filenames, variable,variable_cube,**kwargs)
     return variable_cube
 
