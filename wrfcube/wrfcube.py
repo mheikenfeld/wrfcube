@@ -39,6 +39,10 @@ def loadwrfcubelist(filenames,variable_list,**kwargs):
 def loadwrfcube(filenames,variable,**kwargs):
 #    print(' in loadwrfcube: filenames= ',filenames)
 #    print(' in loadwrfcube: variable= ',variable)
+    if 'lazy' in kwargs:
+        lazy=kwargs.pop('lazy')
+    else:
+        lazy=False
 
     if type(filenames) is list:
         variable_cube=loadwrfcube_mult(filenames,variable,**kwargs)
@@ -46,7 +50,11 @@ def loadwrfcube(filenames,variable,**kwargs):
         variable_cube=loadwrfcube_single(filenames,variable,**kwargs)
     else:
         print('Type of input unknown: Must be str of list')
-#    variable_cube_data=variable_cube.data
+    
+    # load data to get around bugs in lazy evaluation:
+    if not lazy:
+        variable_cube_data=variable_cube.data
+
     add_aux_coordinates_multidim(filenames,variable_cube,**kwargs) 
     return variable_cube
     
@@ -230,9 +238,6 @@ def derivewrfcube(filenames,variable,**kwargs):
         variable_cube=calculate_wrf_maximum_reflectivity(filenames,**kwargs)
     else:
         raise NameError(variable, 'is not a known variable') 
-    
-    #variable_cube=variable_cube.extract(**kwargs.pop('constraint'))
-
     return variable_cube
     
 def calculate_wrf_surface_precipitation(filenames,**kwargs):
@@ -568,12 +573,13 @@ def replacecoordinates(variable_cube,replace_cube):
     return variable_cube_out
 
     
-def addcoordinates(filenames, variable,variable_cube,add_coordinates=None,slice_time=slice(None),constraint=None):
+def addcoordinates(filenames, variable,variable_cube,**kwargs):
+    add_coordinates=kwargs['add_coordinates']
     if add_coordinates==None:
-        variable_cube=add_dim_coordinates(filenames, variable,variable_cube,add_coordinates=add_coordinates,slice_time=slice_time)
+        variable_cube=add_dim_coordinates(filenames, variable,**kwargs)
     else:
-        variable_cube=add_dim_coordinates(filenames, variable,variable_cube,add_coordinates=add_coordinates,slice_time=slice_time)
-        variable_cube=add_aux_coordinates_1dim(filenames, variable,variable_cube,add_coordinates=add_coordinates,slice_time=slice_time)
+        variable_cube=add_dim_coordinates(filenames, variable,**kwargs)
+        variable_cube=add_aux_coordinates_1dim(filenames, variable,variable_cube,**kwargs)
     return variable_cube
 
 def add_dim_coordinates(filenames, variable,variable_cube,add_coordinates=None,slice_time=slice(None)):
@@ -662,10 +668,11 @@ def add_aux_coordinates_1dim(filenames, variable,variable_cube,add_coordinates=N
     
     
     
-def add_aux_coordinates_multidim(filenames,variable_cube,add_coordinates=None,slice_time=slice(None),constraint=None):
+def add_aux_coordinates_multidim(filenames,variable_cube,**kwargs):
     coords=variable_cube.coords()        
    # print(variable_cube.summary(True))
   #  print(add_coordinates)
+    add_coordinates=kwargs['add_coordinates']
     if type(add_coordinates)!=list:
         add_coordinates1=add_coordinates
         add_coordinates=[]
@@ -677,28 +684,28 @@ def add_aux_coordinates_multidim(filenames,variable_cube,add_coordinates=None,sl
          #   print('coordinate is z')
 
             if (coords[0].name()=='time' and coords[1].name()=='bottom_top' and coords[2].name()=='south_north' and coords[3].name()=='west_east'): 
-                z_coord=make_z_coordinate(filenames,slice_time=slice_time,constraint=constraint)
+                z_coord=make_z_coordinate(filenames,**kwargs)
                 variable_cube.add_aux_coord(z_coord,(0,1,2,3))
             elif (coords[0].name()=='bottom_top' and coords[1].name()=='south_north' and coords[2].name()=='west_east'):
-                z_coord=make_z_coordinate(filenames,slice_time=slice_time,constraint=constraint)
+                z_coord=make_z_coordinate(filenames,**kwargs)
                 variable_cube.add_aux_coord(z_coord,(0,1,2))
             elif (coords[0].name()=='time' and coords[1].name()=='bottom_top' and coords[2].name()=='south_north' and coords[3].name()=='west_east_stag'):
-                z_coord=make_z_xstag_coordinate(filenames,slice_time=slice_time,constraint=constraint)
+                z_coord=make_z_xstag_coordinate(filenames,**kwargs)
                 variable_cube.add_aux_coord(z_coord,(0,1,2,3))
             elif (coords[0].name()=='bottom_top' and coords[1].name()=='south_north' and coords[2].name()=='west_east_stag'):
-                z_coord=make_z_xstag_coordinate(filenames,slice_time=slice_time,constraint=constraint)
+                z_coord=make_z_xstag_coordinate(filenames,**kwargs)
                 variable_cube.add_aux_coord(z_coord,(0,1,2))
             elif (coords[0].name()=='time' and coords[1].name()=='bottom_top' and coords[2].name()=='south_north_stag' and coords[3].name()=='west_east'):
-                z_coord=make_z_ystag_coordinate(filenames,slice_time=slice_time,constraint=constraint)
+                z_coord=make_z_ystag_coordinate(filenames,**kwargs)
                 variable_cube.add_aux_coord(z_coord,(0,1,2,3))
             elif (coords[0].name()=='bottom_top' and coords[1].name()=='south_north_stag' and coords[2].name()=='west_east'):
-                z_coord=make_z_ystag_coordinate(filenames,slice_time=slice_time,constraint=constraint)
+                z_coord=make_z_ystag_coordinate(filenames,**kwargs)
                 variable_cube.add_aux_coord(z_coord,(0,1,2))
             elif (coords[0].name()=='time' and coords[1].name()=='bottom_top_stag' and coords[2].name()=='south_north' and coords[3].name()=='west_east'):
-                z_stag_coord=make_z_stag_coordinate(filenames,slice_time=slice_time,constraint=constraint)   
+                z_stag_coord=make_z_stag_coordinate(filenames,**kwargs)   
                 variable_cube.add_aux_coord(z_stag_coord,(0,1,2,3))
             elif (coords[0].name()=='bottom_top_stag' and coords[2].name()=='south_north' and coords[2].name()=='west_east'):
-                z_stag_coord=make_z_stag_coordinate(filenames,slice_time=slice_time,constraint=constraint)   
+                z_stag_coord=make_z_stag_coordinate(filenames,**kwargs)   
                 variable_cube.add_aux_coord(z_stag_coord,(0,1,2))
 
             else:
@@ -706,73 +713,73 @@ def add_aux_coordinates_multidim(filenames,variable_cube,add_coordinates=None,sl
                 
         if coordinate=='pressure' :      
             if (coords[0].name()=='time' and coords[1].name()=='bottom_top' and coords[2].name()=='south_north' and coords[3].name()=='west_east'):
-                p_coord=make_p_coordinate(filenames,slice_time=slice_time,constraint=constraint)
+                p_coord=make_p_coordinate(filenames,**kwargs)
                 variable_cube.add_aux_coord(p_coord,(0,1,2,3))
             elif (coords[0].name()=='time' and coords[1].name()=='bottom_top' and coords[2].name()=='south_north' and coords[3].name()=='west_east_stag'):
-                p_coord=make_p_xstag_coordinate(filenames,slice_time=slice_time,constraint=constraint)
+                p_coord=make_p_xstag_coordinate(filenames,**kwargs)
                 variable_cube.add_aux_coord(p_coord)
             elif (coords[0].name()=='time' and coords[1].name()=='bottom_top' and coords[2].name()=='south_north_stag' and coords[3].name()=='west_east'):
-                p_coord=make_p_ystag_coordinate(filenames,slice_time=slice_time,constraint=constraint)
+                p_coord=make_p_ystag_coordinate(filenames,**kwargs)
                 variable_cube.add_aux_coord(p_coord,(0,1,2,3))
             elif (coords[0].name()=='time' and coords[1].name()=='bottom_top_stag' and coords[2].name()=='south_north' and coords[3].name()=='west_east'):
-                p_coord=make_p_stag_coordinate(filenames,slice_time=slice_time,constraint=constraint)   
+                p_coord=make_p_stag_coordinate(filenames,**kwargs)   
                 variable_cube.add_aux_coord(p_coord,(0,1,2,3))
             else:
                 print("p coordinates added")
                 
         if (coordinate=='zp' or coordinate=='pz'):    
             if (coords[0].name()=='time' and coords[1].name()=='bottom_top' and coords[2].name()=='south_north' and coords[3].name()=='west_east'):
-                z_coord=make_z_coordinate(filenames,slice_time=slice_time,constraint=constraint)
+                z_coord=make_z_coordinate(filenames,**kwargs)
                 variable_cube.add_aux_coord(z_coord,(0,1,2,3))
-                p_coord=make_p_coordinate(filenames,slice_time=slice_time,constraint=constraint)
+                p_coord=make_p_coordinate(filenames,**kwargs)
                 variable_cube.add_aux_coord(p_coord,(0,1,2,3))
             elif (coords[0].name()=='time' and coords[1].name()=='bottom_top' and coords[2].name()=='south_north' and coords[3].name()=='west_east_stag'):
-                z_coord=make_z_xstag_coordinate(filenames,slice_time=slice_time,constraint=constraint)     
+                z_coord=make_z_xstag_coordinate(filenames,**kwargs)     
                 variable_cube.add_aux_coord(z_coord,(0,1,2,3))
-                p_coord=make_p_xstag_coordinate(filenames,slice_time=slice_time,constraint=constraint)
+                p_coord=make_p_xstag_coordinate(filenames,**kwargs)
                 variable_cube.add_aux_coord(p_coord,(0,1,2,3))
             elif (coords[0].name()=='time' and coords[1].name()=='bottom_top' and coords[2].name()=='south_north_stag' and coords[3].name()=='west_east'):
-                z_coord=make_z_ystag_coordinate(filenames,slice_time=slice_time,constraint=constraint)
+                z_coord=make_z_ystag_coordinate(filenames,**kwargs)
                 variable_cube.add_aux_coord(z_coord,(0,1,2,3))
-                p_coord=make_p_ystag_coordinate(filenames,slice_time=slice_time,constraint=constraint)
+                p_coord=make_p_ystag_coordinate(filenames,**kwargs)
                 variable_cube.add_aux_coord(p_coord,(0,1,2,3))
             elif (coords[0].name()=='time' and coords[1].name()=='bottom_top_stag' and coords[2].name()=='south_north' and coords[3].name()=='west_east'):
-                z_stag_coord=make_z_stag_coordinate(filenames,slice_time=slice_time,constraint=constraint)   
+                z_stag_coord=make_z_stag_coordinate(filenames,**kwargs)   
                 variable_cube.add_aux_coord(z_stag_coord,(0,1,2,3))
-                p_coord=make_p_stag_coordinate(filenames,slice_time=slice_time,constraint=constraint)   
+                p_coord=make_p_stag_coordinate(filenames,**kwargs)   
                 variable_cube.add_aux_coord(p_coord,(0,1,2,3))
             else:
                 print("no z and p coordinates added")
                 
         if coordinate=='latlon':    
             if (coords[0].name()=='time' and (coords[1].name()=='bottom_top' or 'bottom_top_stag') and coords[2].name()=='south_north' and coords[3].name()=='west_east'):
-                lat_coord=make_lat_coordinate(filenames,slice_time=slice_time,constraint=constraint)
-                lon_coord=make_lon_coordinate(filenames,slice_time=slice_time,constraint=constraint)   
+                lat_coord=make_lat_coordinate(filenames,**kwargs)
+                lon_coord=make_lon_coordinate(filenames,**kwargs)   
                 variable_cube.add_aux_coord(lat_coord,(0,2,3))
                 variable_cube.add_aux_coord(lon_coord,(0,2,3))            
             elif (coords[0].name()=='time' and (coords[1].name()=='bottom_top' or 'bottom_top_stag') and coords[2].name()=='south_north' and coords[3].name()=='west_east_stag'):
-                lat_coord=make_lat_xstag_coordinate(filenames,slice_time=slice_time,constraint=constraint)
-                lon_coord=make_lon_xstag_coordinate(filenames,slice_time=slice_time,constraint=constraint)   
+                lat_coord=make_lat_xstag_coordinate(filenames,**kwargs)
+                lon_coord=make_lon_xstag_coordinate(filenames,**kwargs)   
                 variable_cube.add_aux_coord(lat_coord,(0,2,3))
                 variable_cube.add_aux_coord(lon_coord,(0,2,3))
             elif (coords[0].name()=='time' and (coords[1].name()=='bottom_top' or 'bottom_top_stag') and coords[2].name()=='south_north_stag' and coords[3].name()=='west_east'):
-                lat_coord=make_lat_ystag_coordinate(filenames,slice_time=slice_time,constraint=constraint)
-                lon_coord=make_lon_ystag_coordinate(filenames,slice_time=slice_time,constraint=constraint)   
+                lat_coord=make_lat_ystag_coordinate(filenames,**kwargs)
+                lon_coord=make_lon_ystag_coordinate(filenames,**kwargs)   
                 variable_cube.add_aux_coord(lat_coord,(0,2,3))
                 variable_cube.add_aux_coord(lon_coord,(0,2,3))
             elif (coords[0].name()=='time'  and coords[1].name()=='south_north' and coords[2].name()=='west_east'):
-                lat_coord=make_lat_coordinate(filenames,slice_time=slice_time,constraint=constraint)
-                lon_coord=make_lon_coordinate(filenames,slice_time=slice_time,constraint=constraint)   
+                lat_coord=make_lat_coordinate(filenames,**kwargs)
+                lon_coord=make_lon_coordinate(filenames,**kwargs)   
                 variable_cube.add_aux_coord(lat_coord,(0,1,2))
                 variable_cube.add_aux_coord(lon_coord,(0,1,2))            
             elif (coords[0].name()=='time'  and coords[1].name()=='south_north' and coords[2].name()=='west_east_stag'):
-                lat_coord=make_lat_xstag_coordinate(filenames,slice_time=slice_time,constraint=constraint)
-                lon_coord=make_lon_xstag_coordinate(filenames,slice_time=slice_time,constraint=constraint)   
+                lat_coord=make_lat_xstag_coordinate(filenames,**kwargs)
+                lon_coord=make_lon_xstag_coordinate(filenames,**kwargs)   
                 variable_cube.add_aux_coord(lat_coord,(0,1,2))
                 variable_cube.add_aux_coord(lon_coord,(0,1,2))
             elif (coords[0].name()=='time' and coords[1].name()=='south_north_stag' and coords[2].name()=='west_east'):
-                lat_coord=make_lat_ystag_coordinate(filenames,slice_time=slice_time,constraint=constraint)
-                lon_coord=make_lon_ystag_coordinate(filenames,slice_time=slice_time,constraint=constraint)   
+                lat_coord=make_lat_ystag_coordinate(filenames,**kwargs)
+                lon_coord=make_lon_ystag_coordinate(filenames,**kwargs)   
                 variable_cube.add_aux_coord(lat_coord,(0,1,2))
                 variable_cube.add_aux_coord(lon_coord,(0,1,2))
             else:
@@ -920,87 +927,87 @@ def make_y_stag_coord(DY,SOUTH_NORTH_PATCH_END_STAG,coord_system=None):
     
 def make_z_coordinate(filenames,slice_time=slice(None),constraint=None):
     from iris import coords
-    z=calculate_wrf_geopotential_height(filenames,slice_time=slice_time,constraint=constraint)    
+    z=calculate_wrf_geopotential_height(filenames,**kwargs)    
     z_coord=coords.AuxCoord(z.data, standard_name='geopotential_height', long_name='geopotential_height', var_name='z', units='m', bounds=None, attributes=None, coord_system=None)
     return z_coord
 
 def make_z_xstag_coordinate(filenames,slice_time=slice(None),constraint=None):
     from iris import coords
-    z=calculate_wrf_geopotential_height_xstag(filenames,slice_time=slice_time,constraint=constraint)
+    z=calculate_wrf_geopotential_height_xstag(filenames,**kwargs)
     z_coord=coords.AuxCoord(z, standard_name=None, long_name='geopotential_height', var_name='z', units='m', bounds=None, attributes=None, coord_system=None)
     return z_coord
     
 def make_z_ystag_coordinate(filenames,slice_time=slice(None),constraint=None):  
     from iris import coords
-    z=calculate_wrf_geopotential_height_ystag(filenames,slice_time=slice_time,constraint=constraint)
+    z=calculate_wrf_geopotential_height_ystag(filenames,**kwargs)
     z_coord=coords.AuxCoord(z, standard_name=None, long_name='geopotential_height', var_name='z', units='m', bounds=None, attributes=None, coord_system=None)
     return z_coord
     
     
 def make_z_stag_coordinate(filenames,slice_time=slice(None),constraint=None):
     from iris import coords
-    z=calculate_wrf_geopotential_height_stag(filenames,slice_time=slice_time,constraint=constraint)
+    z=calculate_wrf_geopotential_height_stag(filenames,**kwargs)
     z_coord=coords.AuxCoord(z.data, standard_name='geopotential_height', long_name='z', var_name='z', units='m', bounds=None, attributes=None, coord_system=None)
     return z_coord
     
 def make_p_coordinate(filenames,slice_time=slice(None),constraint=None):
     from iris import coords
-    p=calculate_wrf_pressure(filenames,slice_time=slice_time,constraint=constraint)
+    p=calculate_wrf_pressure(filenames,**kwargs)
     p_coord=coords.AuxCoord(p.data, standard_name=None, long_name='pressure', var_name='pressure', units='Pa', bounds=None, attributes=None, coord_system=None)
     return p_coord
 
 def make_p_xstag_coordinate(filenames,slice_time=slice(None),constraint=None):
     from iris import coords
-    p=calculate_wrf_pressure_xstag(filenames,slice_time=slice_time,constraint=constraint)
+    p=calculate_wrf_pressure_xstag(filenames,**kwargs)
     p_coord=coords.AuxCoord(p.data, standard_name=None, long_name='pressure', var_name='pressure', units='Pa', bounds=None, attributes=None, coord_system=None)
     return p_coord
     
 def make_p_ystag_coordinate(filenames,slice_time=slice(None),constraint=None):  
     from iris import coords
-    p=calculate_wrf_pressure_ystag(filenames,slice_time=slice_time,constraint=constraint)
+    p=calculate_wrf_pressure_ystag(filenames,**kwargs)
     p_coord=coords.AuxCoord(p.data, standard_name=None, long_name='pressure', var_name='pressure', units='Pa', bounds=None, attributes=None, coord_system=None)
     return p_coord
     
     
 def make_p_stag_coordinate(filenames,slice_time=slice(None),constraint=None):
     from iris import coords
-    p=calculate_wrf_pressure_stag(filenames,slice_time=slice_time,constraint=constraint)
+    p=calculate_wrf_pressure_stag(filenames,**kwargs)
     p_coord=coords.AuxCoord(p.data, standard_name=None, long_name='pressure', var_name='pressure', units='Pa', bounds=None, attributes=None, coord_system=None)
     return p_coord
     
 def make_lon_coordinate(filenames,slice_time=slice(None),constraint=None):
     from iris import coords
-    lon= loadwrfcube(filenames, 'XLONG',slice_time=slice_time,constraint=constraint)
+    lon= loadwrfcube(filenames, 'XLONG',**kwargs)
     lon_coord=coords.AuxCoord(lon.data, standard_name=None, long_name='longitude', var_name='longitude', units='degrees', bounds=None, attributes=None, coord_system=None)
     return lon_coord
     
 def make_lat_coordinate(filenames,slice_time=slice(None),constraint=None):
     from iris import coords
-    lat= loadwrfcube(filenames, 'XLAT',slice_time=slice_time,constraint=constraint)
+    lat= loadwrfcube(filenames, 'XLAT',**kwargs)
     lat_coord=coords.AuxCoord(lat.data, standard_name=None, long_name='latitude', var_name='latitude', units='degrees', bounds=None, attributes=None, coord_system=None)
     return lat_coord
     
 def make_lon_xstag_coordinate(filenames,slice_time=slice(None),constraint=None):
     from iris import coords
-    lon= loadwrfcube(filenames, 'XLONG_U',slice_time=slice_time,constraint=constraint)
+    lon= loadwrfcube(filenames, 'XLONG_U',**kwargs)
     lon_coord=coords.AuxCoord(lon.data, standard_name=None, long_name='longitude', var_name='longitude', units='degrees', bounds=None, attributes=None, coord_system=None)
     return lon_coord
     
 def make_lat_xstag_coordinate(filenames,slice_time=slice(None),constraint=None):
     from iris import coords
-    lat= loadwrfcube(filenames, 'XLAT_U',slice_time=slice_time,constraint=constraint)
+    lat= loadwrfcube(filenames, 'XLAT_U',**kwargs)
     lat_coord=coords.AuxCoord(lat.data, standard_name=None, long_name='latitude', var_name='latitude', units='degrees', bounds=None, attributes=None, coord_system=None)
     return lat_coord
 
 def make_lon_ystag_coordinate(filenames,slice_time=slice(None),constraint=None):
     from iris import coords
-    lon= loadwrfcube(filenames, 'XLONG_V',slice_time=slice_time,constraint=constraint)
+    lon= loadwrfcube(filenames, 'XLONG_V',**kwargs)
     lon_coord=coords.AuxCoord(lon.data, standard_name=None, long_name='longitude', var_name='longitude', units='degrees', bounds=None, attributes=None, coord_system=None)
     return lon_coord
     
-def make_lat_ystag_coordinate(filenames,slice_time=slice(None),constraint=None):
+def make_lat_ystag_coordinate(filenames,**kwargs):
     from iris import coords
-    lat= loadwrfcube(filenames, 'XLAT_V',slice_time=slice_time,constraint=constraint)
+    lat= loadwrfcube(filenames, 'XLAT_V',**kwargs)
     lat_coord=coords.AuxCoord(lat.data, standard_name=None, long_name='latitude', var_name='latidude', units='degrees', bounds=None, attributes=None, coord_system=None)
     return  lat_coord
 
