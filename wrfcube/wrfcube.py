@@ -54,19 +54,25 @@ def loadwrfcube(filenames,variable,**kwargs):
     # load data to get around bugs in lazy evaluation:
     if not lazy:
         variable_cube_data=variable_cube.data
-
-    add_aux_coordinates_multidim(filenames,variable_cube,**kwargs) 
+    
+    if 'add_coordinates' in kwargs:
+        add_coordinates=kwargs['add_coordinates']
+    else:
+        add_coordinates=None
+    if add_coordinates != None:
+        add_aux_coordinates_multidim(filenames,variable_cube,**kwargs) 
     return variable_cube
     
-def loadwrfcube_single(filenames,variable,constraint=None,slice_time=slice(None),add_coordinates=None):
+def loadwrfcube_single(filenames,variable,constraint=None,add_coordinates=None):
     from iris import load_cube 
-    variable_cube=load_cube(filenames,variable)[slice_time]
-    variable_cube=addcoordinates(filenames, variable,variable_cube,add_coordinates=add_coordinates, slice_time=slice_time)        
+    variable_cube=load_cube(filenames,variable)
+    
+    variable_cube=addcoordinates(filenames, variable,variable_cube,add_coordinates=add_coordinates)        
     variable_cube=variable_cube.extract(constraint)
     return variable_cube
         
     
-def loadwrfcube_mult(filenames,variable,constraint=None,slice_time=slice(None),add_coordinates=None):
+def loadwrfcube_mult(filenames,variable,constraint=None,add_coordinates=None):
     from iris.cube import CubeList
     #print(' in loadwrfcube_mult:',constraint)
     cube_list=[]
@@ -84,24 +90,24 @@ def loadwrfcube_mult(filenames,variable,constraint=None,slice_time=slice(None),a
     return variable_cube
 
     
-def loadwrfcube_dimcoord(filenames,variable,**kwargs):
-    from iris import load_cube     
-    variable_cube=load_cube(filenames,variable)[slice_time]
-    for coord in variable_cube.coords():
-        variable_cube.remove_coord(coord.name())
-    variable_cube=add_dim_coordinates(filenames, variable,variable_cube,**kwargs)
-    #variable_cube=variable_cube.extract(constraint)
-#    variable_cube_data=variable_cube.data
-    return variable_cube
+#def loadwrfcube_dimcoord(filenames,variable,**kwargs):
+#    from iris import load_cube     
+#    variable_cube=load_cube(filenames,variable)
+#    for coord in variable_cube.coords():
+#        variable_cube.remove_coord(coord.name())
+#    variable_cube=add_dim_coordinates(filenames, variable,variable_cube,**kwargs)
+#    #variable_cube=variable_cube.extract(constraint)
+##    variable_cube_data=variable_cube.data
+#    return variable_cube
 
     
-def loadwrfcube_nocoord(filenames,variable,slice_time=slice(None)):
-    from iris import load_cube   
-    variable_cube=load_cube(filenames,variable)[slice_time]
-    for coord in variable_cube.coords():
-        variable_cube.remove_coord(coord.name())
-#    variable_cube_data=variable_cube.data
-    return variable_cube
+#def loadwrfcube_nocoord(filenames,variable):
+#    from iris import load_cube   
+#    variable_cube=load_cube(filenames,variable)
+#    for coord in variable_cube.coords():
+#        variable_cube.remove_coord(coord.name())
+##    variable_cube_data=variable_cube.data
+#    return variable_cube
 
 def derivewrfcubelist(filenames,variable_list,**kwargs):
     from iris.cube import CubeList
@@ -585,7 +591,7 @@ def addcoordinates(filenames, variable,variable_cube,**kwargs):
         variable_cube=add_aux_coordinates_1dim(filenames, variable,variable_cube,**kwargs)
     return variable_cube
 
-def add_dim_coordinates(filenames, variable,variable_cube,add_coordinates=None,slice_time=slice(None)):
+def add_dim_coordinates(filenames, variable,variable_cube,add_coordinates=None):
     from netCDF4 import Dataset  # http://code.google.com/p/netcdf4-python/
     from iris import load_cube
     variable_cube_dim= load_cube(filenames, variable)
@@ -605,7 +611,7 @@ def add_dim_coordinates(filenames, variable,variable_cube,add_coordinates=None,s
     BOTTOM_TOP_PATCH_END_STAG=attributes['BOTTOM-TOP_PATCH_END_STAG']
     for dim in range(len(variable_dimensions)):
         if (variable_dimensions[dim]=='Time'):
-           time=make_time_coord(filenames,slice_time=slice_time)
+           time=make_time_coord(filenames)
            variable_cube.add_dim_coord(time,dim)
         elif (variable_dimensions[dim]=='west_east'):
             west_east=make_westeast_coord(DX,WEST_EAST_PATCH_END_UNSTAG)
@@ -627,7 +633,7 @@ def add_dim_coordinates(filenames, variable,variable_cube,add_coordinates=None,s
            variable_cube.add_dim_coord(bottom_top_stag,dim)
     return variable_cube        
     
-def add_aux_coordinates_1dim(filenames, variable,variable_cube,add_coordinates=None,slice_time=slice(None)):
+def add_aux_coordinates_1dim(filenames, variable,variable_cube,add_coordinates=None):
     from netCDF4 import Dataset  # http://code.google.com/p/netcdf4-python/
     from iris import load_cube
     variable_cube_dim= load_cube(filenames, variable)
@@ -673,9 +679,7 @@ def add_aux_coordinates_1dim(filenames, variable,variable_cube,add_coordinates=N
     
 def add_aux_coordinates_multidim(filenames,variable_cube,**kwargs):
     coords=variable_cube.coords()        
-   # print(variable_cube.summary(True))
-  #  print(add_coordinates)
-    add_coordinates=kwargs['add_coordinates']
+    add_coordinates=kwargs.pop('add_coordinates')
     if type(add_coordinates)!=list:
         add_coordinates1=add_coordinates
         add_coordinates=[]
@@ -790,12 +794,12 @@ def add_aux_coordinates_multidim(filenames,variable_cube,**kwargs):
     return variable_cube
 
     
-def make_time_coord(filenames,slice_time=slice(None)):
+def make_time_coord(filenames):
     from iris import load_cube,coords
     from datetime import datetime,timedelta
     from numpy import empty
     Times= load_cube(filenames, 'Times')
-    filetimes = Times.data[[slice_time]]    
+    filetimes = Times.data   
     filetimelist = []   # Will contain list of times in seconds since model start time in file.
     timeobjlist = []    # Will contain list of corresponding datetime objects
     for i, filetime in enumerate(filetimes):
@@ -928,81 +932,81 @@ def make_y_stag_coord(DY,SOUTH_NORTH_PATCH_END_STAG,coord_system=None):
     #y_stag_coord.add_dim_coord(south_north_stag,0)
     return y_stag_coord
     
-def make_z_coordinate(filenames,slice_time=slice(None),constraint=None):
+def make_z_coordinate(filenames,**kwargs):
     from iris import coords
     z=calculate_wrf_geopotential_height(filenames,**kwargs)    
     z_coord=coords.AuxCoord(z.data, standard_name='geopotential_height', long_name='geopotential_height', var_name='z', units='m', bounds=None, attributes=None, coord_system=None)
     return z_coord
 
-def make_z_xstag_coordinate(filenames,slice_time=slice(None),constraint=None):
+def make_z_xstag_coordinate(filenames,**kwargs):
     from iris import coords
     z=calculate_wrf_geopotential_height_xstag(filenames,**kwargs)
     z_coord=coords.AuxCoord(z, standard_name=None, long_name='geopotential_height', var_name='z', units='m', bounds=None, attributes=None, coord_system=None)
     return z_coord
     
-def make_z_ystag_coordinate(filenames,slice_time=slice(None),constraint=None):  
+def make_z_ystag_coordinate(filenames,**kwargs):  
     from iris import coords
     z=calculate_wrf_geopotential_height_ystag(filenames,**kwargs)
     z_coord=coords.AuxCoord(z, standard_name=None, long_name='geopotential_height', var_name='z', units='m', bounds=None, attributes=None, coord_system=None)
     return z_coord
     
     
-def make_z_stag_coordinate(filenames,slice_time=slice(None),constraint=None):
+def make_z_stag_coordinate(filenames,**kwargs):
     from iris import coords
     z=calculate_wrf_geopotential_height_stag(filenames,**kwargs)
     z_coord=coords.AuxCoord(z.data, standard_name='geopotential_height', long_name='z', var_name='z', units='m', bounds=None, attributes=None, coord_system=None)
     return z_coord
     
-def make_p_coordinate(filenames,slice_time=slice(None),constraint=None):
+def make_p_coordinate(filenames,**kwargs):
     from iris import coords
     p=calculate_wrf_pressure(filenames,**kwargs)
     p_coord=coords.AuxCoord(p.data, standard_name=None, long_name='pressure', var_name='pressure', units='Pa', bounds=None, attributes=None, coord_system=None)
     return p_coord
 
-def make_p_xstag_coordinate(filenames,slice_time=slice(None),constraint=None):
+def make_p_xstag_coordinate(filenames,**kwargs):
     from iris import coords
     p=calculate_wrf_pressure_xstag(filenames,**kwargs)
     p_coord=coords.AuxCoord(p.data, standard_name=None, long_name='pressure', var_name='pressure', units='Pa', bounds=None, attributes=None, coord_system=None)
     return p_coord
     
-def make_p_ystag_coordinate(filenames,slice_time=slice(None),constraint=None):  
+def make_p_ystag_coordinate(filenames,**kwargs):  
     from iris import coords
     p=calculate_wrf_pressure_ystag(filenames,**kwargs)
     p_coord=coords.AuxCoord(p.data, standard_name=None, long_name='pressure', var_name='pressure', units='Pa', bounds=None, attributes=None, coord_system=None)
     return p_coord
     
     
-def make_p_stag_coordinate(filenames,slice_time=slice(None),constraint=None):
+def make_p_stag_coordinate(filenames,**kwargs):
     from iris import coords
     p=calculate_wrf_pressure_stag(filenames,**kwargs)
     p_coord=coords.AuxCoord(p.data, standard_name=None, long_name='pressure', var_name='pressure', units='Pa', bounds=None, attributes=None, coord_system=None)
     return p_coord
     
-def make_lon_coordinate(filenames,slice_time=slice(None),constraint=None):
+def make_lon_coordinate(filenames,**kwargs):
     from iris import coords
     lon= loadwrfcube(filenames, 'XLONG',**kwargs)
     lon_coord=coords.AuxCoord(lon.data, standard_name=None, long_name='longitude', var_name='longitude', units='degrees', bounds=None, attributes=None, coord_system=None)
     return lon_coord
     
-def make_lat_coordinate(filenames,slice_time=slice(None),constraint=None):
+def make_lat_coordinate(filenames,**kwargs):
     from iris import coords
     lat= loadwrfcube(filenames, 'XLAT',**kwargs)
     lat_coord=coords.AuxCoord(lat.data, standard_name=None, long_name='latitude', var_name='latitude', units='degrees', bounds=None, attributes=None, coord_system=None)
     return lat_coord
     
-def make_lon_xstag_coordinate(filenames,slice_time=slice(None),constraint=None):
+def make_lon_xstag_coordinate(filenames,**kwargs):
     from iris import coords
     lon= loadwrfcube(filenames, 'XLONG_U',**kwargs)
     lon_coord=coords.AuxCoord(lon.data, standard_name=None, long_name='longitude', var_name='longitude', units='degrees', bounds=None, attributes=None, coord_system=None)
     return lon_coord
     
-def make_lat_xstag_coordinate(filenames,slice_time=slice(None),constraint=None):
+def make_lat_xstag_coordinate(filenames,**kwargs):
     from iris import coords
     lat= loadwrfcube(filenames, 'XLAT_U',**kwargs)
     lat_coord=coords.AuxCoord(lat.data, standard_name=None, long_name='latitude', var_name='latitude', units='degrees', bounds=None, attributes=None, coord_system=None)
     return lat_coord
 
-def make_lon_ystag_coordinate(filenames,slice_time=slice(None),constraint=None):
+def make_lon_ystag_coordinate(filenames,**kwargs):
     from iris import coords
     lon= loadwrfcube(filenames, 'XLONG_V',**kwargs)
     lon_coord=coords.AuxCoord(lon.data, standard_name=None, long_name='longitude', var_name='longitude', units='degrees', bounds=None, attributes=None, coord_system=None)
