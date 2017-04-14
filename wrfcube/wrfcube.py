@@ -37,8 +37,8 @@ def loadwrfcubelist(filenames,variable_list,**kwargs):
 
 
 def loadwrfcube(filenames,variable,**kwargs):
-#    print(' in loadwrfcube: filenames= ',filenames)
-#    print(' in loadwrfcube: variable= ',variable)
+    print(' in loadwrfcube: filenames= ',filenames)
+    print(' in loadwrfcube: variable= ',variable)
     if 'lazy' in kwargs:
         lazy=kwargs.pop('lazy')
     else:
@@ -246,15 +246,16 @@ def derivewrfcube(filenames,variable,**kwargs):
         raise NameError(variable, 'is not a known variable') 
     return variable_cube
     
-def calculate_wrf_surface_precipitation(filenames,**kwargs):
+def calculate_wrf_surface_precipitation(filenames,constraint=None,add_coordinates=None):
     import numpy as np
-    RAINNC= loadwrfcube(filenames, 'RAINNC')
+    RAINNC= loadwrfcube(filenames, 'RAINNC',add_coordinates=add_coordinates)
     dt=(RAINNC.coords('time')[0].points[1]-RAINNC.coords('time')[0].points[0])*24
     rainnc_inst=np.concatenate((RAINNC.data[[1],:,:]-RAINNC.data[[0],:,:],RAINNC.data[1:,:,:]-RAINNC.data[0:-1:,:,:]),axis=0)/dt
     RAINNC_inst=RAINNC
     RAINNC_inst.data=rainnc_inst
     RAINNC_inst.rename('surface precipitation')
     RAINNC_inst.units= 'mm/h'
+    RAINNC_inst=RAINNC_inst.extract(constraint)
     return RAINNC_inst
 
 def variable_list(filenames):
