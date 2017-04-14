@@ -37,8 +37,8 @@ def loadwrfcubelist(filenames,variable_list,**kwargs):
 
 
 def loadwrfcube(filenames,variable,**kwargs):
-    print(' in loadwrfcube: filenames= ',filenames)
-    print(' in loadwrfcube: variable= ',variable)
+#    print(' in loadwrfcube: filenames= ',filenames)
+#    print(' in loadwrfcube: variable= ',variable)
     if 'lazy' in kwargs:
         lazy=kwargs.pop('lazy')
     else:
