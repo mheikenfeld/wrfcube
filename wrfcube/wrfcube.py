@@ -195,7 +195,8 @@ def derivewrfcube(filenames,variable,**kwargs):
         variable_cube=calculate_wrf_airmass(filenames,**kwargs)
     elif variable == 'layer_height':    
         variable_cube=calculate_wrf_layerheight(filenames,**kwargs)
-        
+    elif variable == 'area':    
+        variable_cube=calculate_wrf_area(filenames,**kwargs)        
     elif variable == 'geopotential_height':    
         variable_cube=calculate_wrf_geopotential_height(filenames,**kwargs)
         replace_cube=loadwrfcube(filenames,'T',**kwargs)
@@ -204,15 +205,15 @@ def derivewrfcube(filenames,variable,**kwargs):
     elif variable == 'geopotential_height_stag':    
         variable_cube=calculate_wrf_geopotential_height_stag(filenames,**kwargs)
 
-    elif variable == 'geopotential_height_xstag':    
-        variable_cube=calculate_wrf_geopotential_height_xstag(filenames,**kwargs)
-        replace_cube=loadwrfcube(filenames,'U',**kwargs)
-        variable_cube=replacecoordinates(variable_cube,replace_cube)  
-
-    elif variable == 'geopotential_height_ystag':    
-        variable_cube=calculate_wrf_geopotential_height_ystag(filenames,**kwargs)
-        replace_cube=loadwrfcube(filenames,'V',**kwargs)
-        variable_cube=replacecoordinates(variable_cube,replace_cube)  
+#    elif variable == 'geopotential_height_xstag':    
+#        variable_cube=calculate_wrf_geopotential_height_xstag(filenames,**kwargs)
+#        replace_cube=loadwrfcube(filenames,'U',**kwargs)
+#        variable_cube=replacecoordinates(variable_cube,replace_cube)  
+#
+#    elif variable == 'geopotential_height_ystag':    
+#        variable_cube=calculate_wrf_geopotential_height_ystag(filenames,**kwargs)
+#        replace_cube=loadwrfcube(filenames,'V',**kwargs)
+#        variable_cube=replacecoordinates(variable_cube,replace_cube)  
 
     elif variable == 'pressure':    
         variable_cube=calculate_wrf_pressure(filenames,**kwargs)
@@ -338,7 +339,6 @@ def calculate_wrf_layerheight(filenames,**kwargs):
     replace_cube=loadwrfcube(filenames,'T',**kwargs)
     layer_height=replacecoordinates(layer_height,replace_cube)
     return layer_height
-
     
 def calculate_wrf_LWP(filenames,**kwargs):
     from iris.analysis import SUM
@@ -507,7 +507,9 @@ def array_interp_reduceby1(array,dim):
 
 def cube_interp_extendby1(cube_in,coord):
     import numpy as np
-    dim=cube_in.coord_dims(coord)
+    dim=cube_in.coord_dims(coord)[0]
+    cube_data=cube_in.data
+    print(cube_data[0])
     ndim=cube_in.ndim
     idx1=[slice(None)] * (ndim)
     idx2=[slice(None)] * (ndim)
@@ -517,7 +519,14 @@ def cube_interp_extendby1(cube_in,coord):
     idx2[dim]=slice(0,-1)
     idx_start[dim]=slice(1)
     idx_end[dim]=slice(-2,-1)
-    array_out=np.concatenate((cube_in[idx_start.data],0.5*(cube_in[idx1]+cube_in[idx2]),cube_in[idx_end].data),axis=dim)
+    cube_data[idx_start]
+    cube_data[idx1]
+    cube_data[idx2]
+    cube_data[idx_end]    
+    array_out=np.concatenate((cube_data[idx_start],0.5*(cube_data[idx1]+cube_data[idx2]),cube_data[idx_end]),axis=dim)
+
+#    idx1[dim]=slice(1)
+#    array_out=np.concatenate((cube_data[idx1],cube_data),axis=dim)
     return array_out
     
 def cube_interp_reduceby1(cube_in,coord):
@@ -550,20 +559,23 @@ def calculate_wrf_geopotential_height(filenames,**kwargs):
     
 def calculate_wrf_geopotential_height_ystag(filenames,**kwargs):
     #from iris import Constraint
-    z=derivewrfcube(filenames,'geopotential_height',**kwargs)
+    #z=derivewrfcube(filenames,'geopotential_height',**kwargs)
+    z=calculate_wrf_geopotential_height(filenames,**kwargs)
     #south_north=z.coord('south_north').points
     #z_ystag = 0.5*(z.extract(Constraint(south_north=south_north[:-1]))+z.extract(Constraint(south_north=south_north[1:])).data)
     dim=z.coord_dims('south_north')[0]
-    z_ystag = array_interp_extendby1(z.data,dim)
+    z_ystag = cube_interp_extendby1(z,'south_north')
     return z_ystag
     
 def calculate_wrf_geopotential_height_xstag(filenames,**kwargs):
     #from iris import Constraint
-    z=derivewrfcube(filenames,'geopotential_height',**kwargs)
+   # z=derivewrfcube(filenames,'geopotential_height',**kwargs)
+    z=calculate_wrf_geopotential_height(filenames,**kwargs)
+
     #west_east=z.coord('west_east').points
     #z_xstag = 0.5*(z.extract(Constraint(west_east=west_east[:-1]))+z.extract(Constraint(west_east=west_east[1:])).data)
     dim=z.coord_dims('west_east')[0]
-    z_xstag = array_interp_extendby1(z.data,dim)
+    z_xstag = cube_interp_extendby1(z,'west_east')
     return z_xstag
 
 def remove_all_coordinates(variable_cube):
@@ -942,13 +954,13 @@ def make_z_coordinate(filenames,**kwargs):
 def make_z_xstag_coordinate(filenames,**kwargs):
     from iris import coords
     z=calculate_wrf_geopotential_height_xstag(filenames,**kwargs)
-    z_coord=coords.AuxCoord(z, standard_name=None, long_name='geopotential_height', var_name='z', units='m', bounds=None, attributes=None, coord_system=None)
+    z_coord=coords.AuxCoord(z, standard_name='geopotential_height', long_name='geopotential_height', var_name='z', units='m', bounds=None, attributes=None, coord_system=None)
     return z_coord
     
 def make_z_ystag_coordinate(filenames,**kwargs):  
     from iris import coords
     z=calculate_wrf_geopotential_height_ystag(filenames,**kwargs)
-    z_coord=coords.AuxCoord(z, standard_name=None, long_name='geopotential_height', var_name='z', units='m', bounds=None, attributes=None, coord_system=None)
+    z_coord=coords.AuxCoord(z, standard_name='geopotential_height', long_name='geopotential_height', var_name='z', units='m', bounds=None, attributes=None, coord_system=None)
     return z_coord
     
     
