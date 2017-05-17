@@ -42,7 +42,7 @@ def loadwrfcube(filenames,variable,**kwargs):
     if 'lazy' in kwargs:
         lazy=kwargs.pop('lazy')
     else:
-        lazy=False
+        lazy=True
 
     if type(filenames) is list:
         variable_cube=loadwrfcube_mult(filenames,variable,**kwargs)
