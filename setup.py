@@ -8,5 +8,5 @@ setup(name='wrfcube',
       author_email='max.heikenfeld@physics.ox.ac.uk',
       license='GNU',
       packages=['wrfcube'],
-      install_requires=['iris','numpy','netCDF4'],
+      install_requires=[],#['iris','numpy','netCDF4'],
       zip_safe=False)
