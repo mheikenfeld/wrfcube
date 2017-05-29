@@ -21,6 +21,7 @@ def load(filenames,variable,mode='auto',**kwargs):
         variable_load=variable_dict_pseudonym[variable]
         variable_cube=loadwrfcube(filenames,variable_load,**kwargs)
     else:
+       print("mode=",mode)
        raise SystemExit('unknown mode')
 
     return variable_cube
@@ -49,7 +50,8 @@ def loadwrfcube(filenames,variable,**kwargs):
     elif type(filenames) is str:
         variable_cube=loadwrfcube_single(filenames,variable,**kwargs)
     else:
-       raise SystemExit('Type of input unknown: Must be str of list')
+        print("filenames=",filenames)
+        raise SystemExit('Type of input unknown: Must be str of list')
     
     # load data to get around bugs in lazy evaluation:
     if not lazy:
@@ -728,7 +730,8 @@ def add_aux_coordinates_multidim(filenames,variable_cube,**kwargs):
                 z_stag_coord=make_z_stag_coordinate(filenames,**kwargs)   
                 variable_cube.add_aux_coord(z_stag_coord,(0,1,2))
             else:
-               raise SystemExit("no z coordinates added")
+                print(coords)
+                raise SystemExit("no z coordinates added")
                 
         if coordinate=='pressure' :      
             if (coords[0].name()=='time' and coords[1].name()=='bottom_top' and coords[2].name()=='south_north' and coords[3].name()=='west_east'):
@@ -744,7 +747,8 @@ def add_aux_coordinates_multidim(filenames,variable_cube,**kwargs):
                 p_coord=make_p_stag_coordinate(filenames,**kwargs)   
                 variable_cube.add_aux_coord(p_coord,(0,1,2,3))
             else:
-               raise SystemExit("p coordinates added")
+                print(coords)
+                raise SystemExit("p coordinates added")
                 
         if (coordinate=='zp' or coordinate=='pz'):    
             if (coords[0].name()=='time' and coords[1].name()=='bottom_top' and coords[2].name()=='south_north' and coords[3].name()=='west_east'):
@@ -768,7 +772,8 @@ def add_aux_coordinates_multidim(filenames,variable_cube,**kwargs):
                 p_coord=make_p_stag_coordinate(filenames,**kwargs)   
                 variable_cube.add_aux_coord(p_coord,(0,1,2,3))
             else:
-               raise SystemExit("no z and p coordinates added")
+                print(coords)
+                raise SystemExit("no z and p coordinates added")
                 
         if coordinate=='latlon':    
             if (coords[0].name()=='time' and (coords[1].name()=='bottom_top' or 'bottom_top_stag') and coords[2].name()=='south_north' and coords[3].name()=='west_east'):
@@ -802,7 +807,8 @@ def add_aux_coordinates_multidim(filenames,variable_cube,**kwargs):
                 variable_cube.add_aux_coord(lat_coord,(0,1,2))
                 variable_cube.add_aux_coord(lon_coord,(0,1,2))
             else:
-               raise SystemExit("no lat/lon coordinates added")
+                print(coords)
+                raise SystemExit("no lat/lon coordinates added")
     return variable_cube
 
     
