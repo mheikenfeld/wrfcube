@@ -726,7 +726,7 @@ def add_aux_coordinates_multidim(filenames,variable_cube,**kwargs):
             elif (coords[0].name()=='time' and coords[1].name()=='bottom_top_stag' and coords[2].name()=='south_north' and coords[3].name()=='west_east'):
                 z_stag_coord=make_z_stag_coordinate(filenames,**kwargs)   
                 variable_cube.add_aux_coord(z_stag_coord,(0,1,2,3))
-            elif (coords[0].name()=='bottom_top_stag' and coords[2].name()=='south_north' and coords[2].name()=='west_east'):
+            elif (coords[0].name()=='bottom_top_stag' and coords[1].name()=='south_north' and coords[2].name()=='west_east'):
                 z_stag_coord=make_z_stag_coordinate(filenames,**kwargs)   
                 variable_cube.add_aux_coord(z_stag_coord,(0,1,2))
             else:
