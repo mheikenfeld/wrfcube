@@ -586,7 +586,7 @@ def remove_all_coordinates(variable_cube):
 
 def replacecoordinates(variable_cube,replace_cube):        
     variable_cube_out=replace_cube
-#    variable_cube_out.data=variable_cube.data
+    variable_cube_out.data=variable_cube.data
     variable_cube_out.rename(variable_cube.name())
     variable_cube_out.units=variable_cube.units
     variable_cube_out.attributes={}
