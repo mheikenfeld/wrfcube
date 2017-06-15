@@ -307,29 +307,29 @@ def calculate_RH(QVAPOR,T,p):
     return RH   
     
 def calculate_wrf_LWC(filenames,**kwargs):
-    microphysics_scheme=kwargs.pop(microphysics_scheme)
+    microphysics_scheme=kwargs.pop('microphysics_scheme')
     #QCLOUD=loadwrfcube(filenames, 'QCLOUD',**kwargs)
     #QRAIN=loadwrfcube(filenames, 'QRAIN',**kwargs)
     #LWC=QCLOUD+QRAIN    
     list_variables=['QCLOUD','QRAIN']
-    LWC=load_sum(filename,list_variables,**kwargs)
+    LWC=load_sum(filenames,list_variables,**kwargs)
     LWC.rename('liquid water content')
     #LWC.rename('mass_concentration_of_liquid_water_in_air')
     return LWC   
 #    
 def calculate_wrf_IWC(filenames,**kwargs):
-    microphysics_scheme=kwargs.pop(microphysics_scheme)
+    microphysics_scheme=kwargs.pop('microphysics_scheme')
     #QICE=loadwrfcube(filenames, 'QICE',**kwargs)
     #QSNOW=loadwrfcube(filenames, 'QSNOW',**kwargs)
     #QGRAUP=loadwrfcube(filenames, 'QGRAUP',**kwargs)
     #IWC=QICE+QSNOW+QGRAUP
-    if microphysics_scheme in [None,morrison,thompson]:
+    if microphysics_scheme in [None,'morrison','thompson']:
         list_variables=['QICE','QSNOW','QGRAUP']
-    elif microphysics_scheme in ["SBM_full"]:
+    elif microphysics_scheme in ['SBM_full']:
         list_variables=['QICE','QSNOW','QGRAUP']
     elif microphysics_scheme in ["SBM_full"]:
         list_variables=['QICEC','QICED','QICEP','QSNOW','QGRAUP','QHAIL']
-    IWC=load_sum(filename,list_variables,**kwargs)
+    IWC=load_sum(filenames,list_variables,**kwargs)
     IWC.rename('ice water content')
     #IWC.rename('mass_concentration_of_ice_water_in_air')
 
