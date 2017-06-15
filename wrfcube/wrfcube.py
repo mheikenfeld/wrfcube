@@ -181,11 +181,7 @@ def derivewrfcube(filenames,variable,**kwargs):
     elif variable == 'LWC':    
         variable_cube=calculate_wrf_LWC(filenames,**kwargs)
         #variable_cube=addcoordinates(filenames, 'QCLOUD',variable_cube,add_coordinates)
-<<<<<<< HEAD
     elif variable == 'IWC':  
-=======
-    elif variable == 'IWC'  
->>>>>>> d113c9d35275dae4a446f43dab243e5094a313e6
         variable_cube=calculate_wrf_IWC(filenames,**kwargs)
         #variable_cube=addcoordinates(filenames, 'QICE',variable_cube,add_coordinates)    
     elif variable == 'LWP':    
