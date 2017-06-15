@@ -181,7 +181,7 @@ def derivewrfcube(filenames,variable,**kwargs):
     elif variable == 'LWC':    
         variable_cube=calculate_wrf_LWC(filenames,**kwargs)
         #variable_cube=addcoordinates(filenames, 'QCLOUD',variable_cube,add_coordinates)
-    elif variable == 'IWC':    
+    elif variable == 'IWC'  
         variable_cube=calculate_wrf_IWC(filenames,**kwargs)
         #variable_cube=addcoordinates(filenames, 'QICE',variable_cube,add_coordinates)    
     elif variable == 'LWP':    
@@ -307,18 +307,29 @@ def calculate_RH(QVAPOR,T,p):
     return RH   
     
 def calculate_wrf_LWC(filenames,**kwargs):
-    QCLOUD=loadwrfcube(filenames, 'QCLOUD',**kwargs)
-    QRAIN=loadwrfcube(filenames, 'QRAIN',**kwargs)
-    LWC=QCLOUD+QRAIN
+    microphysics_scheme=kwargs.pop(microphysics_scheme)
+    #QCLOUD=loadwrfcube(filenames, 'QCLOUD',**kwargs)
+    #QRAIN=loadwrfcube(filenames, 'QRAIN',**kwargs)
+    #LWC=QCLOUD+QRAIN    
+    list_variables=['QCLOUD','QRAIN']
+    LWC=load_sum(filename,list_variables,**kwargs)
     LWC.rename('liquid water content')
     #LWC.rename('mass_concentration_of_liquid_water_in_air')
     return LWC   
 #    
-def calculate_wrf_IWC(filenames,**kwargs):     
-    QICE=loadwrfcube(filenames, 'QICE',**kwargs)
-    QSNOW=loadwrfcube(filenames, 'QSNOW',**kwargs)
-    QGRAUP=loadwrfcube(filenames, 'QGRAUP',**kwargs)
-    IWC=QICE+QSNOW+QGRAUP
+def calculate_wrf_IWC(filenames,**kwargs):
+    microphysics_scheme=kwargs.pop(microphysics_scheme)
+    #QICE=loadwrfcube(filenames, 'QICE',**kwargs)
+    #QSNOW=loadwrfcube(filenames, 'QSNOW',**kwargs)
+    #QGRAUP=loadwrfcube(filenames, 'QGRAUP',**kwargs)
+    #IWC=QICE+QSNOW+QGRAUP
+    if microphysics_scheme in [None,morrison,thompson]:
+        list_variables=['QICE','QSNOW','QGRAUP']
+    elif microphysics_scheme in ["SBM_full"]:
+        list_variables=['QICE','QSNOW','QGRAUP']
+    elif microphysics_scheme in ["SBM_full"]:
+        list_variables=['QICEC','QICED','QICEP','QSNOW','QGRAUP','QHAIL']
+    IWC=load_sum(filename,list_variables,**kwargs)
     IWC.rename('ice water content')
     #IWC.rename('mass_concentration_of_ice_water_in_air')
 
@@ -540,6 +551,14 @@ def cube_interp_reduceby1(cube_in,coord):
 
     cube_out=0.5*(cube_in[idx1]+cube_in[idx2].data)
     return cube_out
+
+def load_sum(filename,list_variables,**kwargs)
+    cube_out=load(filenames,list_variables[0],**kwargs)
+    for variable in list_variables[1:]:
+        cube_out=cube_out+load(filenames,variable,**kwargs)
+    return cube_out
+    
+
 
 def calculate_wrf_geopotential_height_stag(filenames,**kwargs):
     from iris import coords
