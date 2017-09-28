@@ -169,7 +169,7 @@ variable_list_derive=[
 
 #def derivewrfcube_single(filenames,variable,**kwargs):
 def derivewrfcube(filenames,variable,**kwargs):
-    if variable == 'potential temperature':
+    if variable == 'potential_temperature':
         variable_cube=calculate_wrf_potential_temperature(filenames,**kwargs)
         #variable_cube_out=addcoordinates(filenames, 'T',variable_cube,add_coordinates)
     elif variable in ['temperature','air_temperature']:
@@ -243,7 +243,7 @@ def derivewrfcube(filenames,variable,**kwargs):
     elif variable == 'surface_precipitation':
         variable_cube=calculate_wrf_surface_precipitation(filenames,**kwargs)
         #variable_cube_out=addcoordinates(filenames, 'T',variable_cube,add_coordinates)
-    elif variable == 'maximum reflectivity':    
+    elif variable == 'maximum_reflectivity':    
         variable_cube=calculate_wrf_maximum_reflectivity(filenames,**kwargs)
     else:
         raise NameError(variable, 'is not a known variable') 
@@ -1056,4 +1056,6 @@ def make_lat_ystag_coordinate(filenames,**kwargs):
     lat= loadwrfcube(filenames, 'XLAT_V',**kwargs)
     lat_coord=coords.AuxCoord(lat.data, standard_name=None, long_name='latitude', var_name='latidude', units='degrees', bounds=None, attributes=None, coord_system=None)
     return  lat_coord
+
+
 
