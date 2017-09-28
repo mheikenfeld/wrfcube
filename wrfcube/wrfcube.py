@@ -145,6 +145,8 @@ variable_dict_pseudonym={}
 variable_dict_pseudonym['radar_relfectivity']='REFL10CM'
 
 
+import warnings
+warnings.filterwarnings('ignore', category=UserWarning, append=True)
 
 
 variable_list_derive=[
