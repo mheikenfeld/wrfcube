@@ -259,7 +259,7 @@ def calculate_wrf_surface_precipitation(filenames,constraint=None,add_coordinate
     rainnc_inst=np.concatenate((RAINNC.data[[1],:,:]-RAINNC.data[[0],:,:],RAINNC.data[1:,:,:]-RAINNC.data[0:-1:,:,:]),axis=0)/dt
     RAINNC_inst=RAINNC
     RAINNC_inst.data=rainnc_inst
-    RAINNC_inst.rename('surface precipitation')
+    RAINNC_inst.rename('surface_precipitation')
     RAINNC_inst.units= 'mm/h'
     RAINNC_inst=RAINNC_inst.extract(constraint)
     return RAINNC_inst
@@ -274,14 +274,14 @@ def variable_list(filenames):
 def calculate_wrf_potential_temperature(filenames,**kwargs):
     from iris import coords
     T= loadwrfcube(filenames, 'T',**kwargs)
-    T0 = coords.AuxCoord(300.0,long_name='reference_Temperature', units='K')
+    T0 = coords.AuxCoord(300.0,long_name='reference_temperature', units='K')
     theta=T+T0;
-    theta.rename('potential temperature')
+    theta.rename('potential_temperature')
     return theta
     
 def calculate_wrf_temperature(filenames,**kwargs):
     from iris import coords
-    theta= derivewrfcube(filenames,'potential temperature',**kwargs)  
+    theta= derivewrfcube(filenames,'potential_temperature',**kwargs)  
     p = derivewrfcube(filenames,'pressure',**kwargs)
     p0 =coords.AuxCoord(1000.0,long_name='reference_pressure', units='hPa')
     p0.convert_units(p.units)
