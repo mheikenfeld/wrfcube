@@ -359,6 +359,7 @@ def calculate_wrf_layerheight(filenames,**kwargs):
 def calculate_wrf_LWP(filenames,**kwargs):
     from iris.analysis import SUM
     LWC=derivewrfcube(filenames,'LWC',**kwargs)
+    microphysics_scheme=kwargs.pop('microphysics_scheme')
     Airmass=derivewrfcube(filenames,'airmass',**kwargs)
     LWP=(LWC*Airmass).collapsed(('bottom_top'),SUM)
     LWP.rename('liquid water path')
@@ -368,6 +369,7 @@ def calculate_wrf_LWP(filenames,**kwargs):
 def calculate_wrf_IWP(filenames,**kwargs):    
     from iris.analysis import SUM
     IWC=derivewrfcube(filenames,'IWC',**kwargs)
+    microphysics_scheme=kwargs.pop('microphysics_scheme')
     Airmass=derivewrfcube(filenames,'airmass',**kwargs)
     IWP=(IWC*Airmass).collapsed(('bottom_top'),SUM)
     IWP.rename('ice water path')
