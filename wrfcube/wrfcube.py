@@ -840,28 +840,31 @@ def add_aux_coordinates_multidim(filenames,variable_cube,**kwargs):
     
 def make_time_coord(filenames):
     from iris import load_cube,coords
+    from cf_units import date2num,CALENDAR_STANDARD
     from datetime import datetime,timedelta
     from numpy import empty
     Times= load_cube(filenames, 'Times')
     filetimes = Times.data   
-    filetimelist = []   # Will contain list of times in seconds since model start time in file.
+#    filetimelist = []   # Will contain list of times in seconds since model start time in file.
     timeobjlist = []    # Will contain list of corresponding datetime objects
     for i, filetime in enumerate(filetimes):
         timeobj = datetime.strptime(filetime.tostring().decode('UTF-8'), "%Y-%m-%d_%H:%M:%S")
-        if i == 0:
-            timeobj0 = timeobj
-        time_dt = timeobj-timeobj0 # timedelta object representing difference in time from start time
-        filetimelist.append(time_dt.seconds)
+#        if i == 0:
+#            timeobj0 = timeobj
+#        time_dt = timeobj-timeobj0 # timedelta object representing difference in time from start time
+#        filetimelist.append(time_dt.seconds)
         timeobjlist.append(timeobj)
-    time_days=empty(len(timeobjlist))
-    #Include a different base_date for dates close to 0001-01-01 (idealised simulations)
+#    time_days=empty(len(timeobjlist))
+#    #Include a different base_date for dates close to 0001-01-01 (idealised simulations)
     if timeobjlist[0]<datetime(100,1,1):
         base_date=datetime(1,1,1)
     else:
         base_date=datetime(1970,1,1)
     time_units='days since '+ base_date.strftime('%Y-%m-%d')
-    for i in range(len(timeobjlist)):
-        time_days[i]=(timeobjlist[i] - base_date).total_seconds() / timedelta(1).total_seconds()
+#    for i in range(len(timeobjlist)):
+#        time_days[i]=(timeobjlist[i] - base_date).total_seconds() / timedelta(1).total_seconds()
+    
+    time_days=date2num(timeobjlist, time_units, CALENDAR_STANDARD)
     time_coord=coords.DimCoord(time_days, standard_name='time', long_name='time', var_name='time', units=time_units, bounds=None, attributes=None, coord_system=None, circular=False)
     return time_coord              
 
