@@ -160,13 +160,15 @@ variable_list_derive=[
         'IWP',
         'IWV',
         'airmass',
-        'layer_height',
+        'airmass_path',
+        'layer_height',        
+        'volume',
         'geopotential_height',
         'pressure',
         'relative_humidity',
         'w_at_T',
         'maximum_reflectivity' ,
-        'surface_precipitation'
+        'surface_precipitation',
         ]
 
 
@@ -198,10 +200,14 @@ def derivewrfcube(filenames,variable,**kwargs):
         #variable_cube=addcoordinates(filenames, 'OLR',variable_cube,add_coordinates)
     elif variable == 'airmass':    
         variable_cube=calculate_wrf_airmass(filenames,**kwargs)
+    elif variable == 'airmass_path':    
+        variable_cube=calculate_wrf_airmass_path(filenames,**kwargs)
     elif variable == 'layer_height':    
         variable_cube=calculate_wrf_layerheight(filenames,**kwargs)
     elif variable == 'area':    
-        variable_cube=calculate_wrf_area(filenames,**kwargs)        
+        variable_cube=calculate_wrf_area(filenames,**kwargs) 
+    elif variable == 'volume':    
+        variable_cube=calculate_wrf_volume(filenames,**kwargs) 
     elif variable == 'geopotential_height':    
         variable_cube=calculate_wrf_geopotential_height(filenames,**kwargs)
         replace_cube=loadwrfcube(filenames,'T',**kwargs)
@@ -338,13 +344,26 @@ def calculate_wrf_IWC(filenames,**kwargs):
 
     return IWC
     
-def calculate_wrf_airmass(filenames,**kwargs):
+def calculate_wrf_airmass_path(filenames,**kwargs):
     rho=derivewrfcube(filenames,'density',**kwargs)
     layer_height=derivewrfcube(filenames,'layer_height',**kwargs)
     Airmass=rho*layer_height
-    Airmass.rename('mass of air')
+    Airmass.rename('airmass_path')
     return Airmass
-    
+
+def calculate_wrf_airmass(filenames,**kwargs):
+    rho=derivewrfcube(filenames,'density',**kwargs)
+    volume=derivewrfcube(filenames,'volume',**kwargs)
+    Airmass=rho*volume
+    Airmass.rename('mass_of_air')
+    return Airmass
+
+def calculate_wrf_volume(filenames,**kwargs):
+    layer_height=derivewrfcube(filenames,'layer_height',**kwargs)
+    volume=layer_height*layer_height.coord('projection_x_coord')*layer_height.coord('projection_y_coord')
+    volume.rename('cell volume')
+    return volume
+
     
 def calculate_wrf_layerheight(filenames,**kwargs):
     from iris import Constraint
@@ -360,7 +379,7 @@ def calculate_wrf_LWP(filenames,**kwargs):
     from iris.analysis import SUM
     LWC=derivewrfcube(filenames,'LWC',**kwargs)
     microphysics_scheme=kwargs.pop('microphysics_scheme')
-    Airmass=derivewrfcube(filenames,'airmass',**kwargs)
+    Airmass=derivewrfcube(filenames,'airmass_path',**kwargs)
     LWP=(LWC*Airmass).collapsed(('bottom_top'),SUM)
     LWP.rename('liquid water path')
     #LWP.rename('atmosphere_mass_content_of_cloud_liquid_water')
@@ -370,7 +389,7 @@ def calculate_wrf_IWP(filenames,**kwargs):
     from iris.analysis import SUM
     IWC=derivewrfcube(filenames,'IWC',**kwargs)
     microphysics_scheme=kwargs.pop('microphysics_scheme')
-    Airmass=derivewrfcube(filenames,'airmass',**kwargs)
+    Airmass=derivewrfcube(filenames,'airmass_path',**kwargs)
     IWP=(IWC*Airmass).collapsed(('bottom_top'),SUM)
     IWP.rename('ice water path')
     #IWP.rename('atmosphere_mass_content_of_cloud_ice_water')
@@ -379,7 +398,7 @@ def calculate_wrf_IWP(filenames,**kwargs):
 def calculate_wrf_IWV(filenames,**kwargs):    
     from iris.analysis import SUM
     QVAPOR=loadwrfcube(filenames,'QVAPOR',**kwargs)
-    Airmass=derivewrfcube(filenames,'airmass',**kwargs)
+    Airmass=derivewrfcube(filenames,'airmass_path',**kwargs)
     IWV=(QVAPOR*Airmass).collapsed(('bottom_top'),SUM)
     IWV.rename('integrated water vapour')
     #IWV.rename('atmosphere_mass_content_of_water_vapor')
