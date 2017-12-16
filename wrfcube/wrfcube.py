@@ -360,7 +360,7 @@ def calculate_wrf_airmass(filenames,**kwargs):
 
 def calculate_wrf_volume(filenames,**kwargs):
     layer_height=derivewrfcube(filenames,'layer_height',**kwargs)
-    volume=layer_height*layer_height.coord('projection_x_coord')*layer_height.coord('projection_y_coord')
+    volume=layer_height*layer_height.coord('projection_x_coordinate')*layer_height.coord('projection_y_coordinate')
     volume.rename('cell volume')
     return volume
 
