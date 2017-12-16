@@ -316,10 +316,7 @@ def calculate_RH(QVAPOR,T,p):
     return RH   
     
 def calculate_wrf_LWC(filenames,**kwargs):
-    microphysics_scheme=kwargs.pop('microphysics_scheme')
-    #QCLOUD=loadwrfcube(filenames, 'QCLOUD',**kwargs)
-    #QRAIN=loadwrfcube(filenames, 'QRAIN',**kwargs)
-    #LWC=QCLOUD+QRAIN    
+    microphysics_scheme=kwargs.pop('microphysics_scheme',None)
     list_variables=['QCLOUD','QRAIN']
     LWC=load_sum(filenames,list_variables,**kwargs)
     LWC.rename('liquid water content')
@@ -327,11 +324,7 @@ def calculate_wrf_LWC(filenames,**kwargs):
     return LWC   
 #    
 def calculate_wrf_IWC(filenames,**kwargs):
-    microphysics_scheme=kwargs.pop('microphysics_scheme')
-    #QICE=loadwrfcube(filenames, 'QICE',**kwargs)
-    #QSNOW=loadwrfcube(filenames, 'QSNOW',**kwargs)
-    #QGRAUP=loadwrfcube(filenames, 'QGRAUP',**kwargs)
-    #IWC=QICE+QSNOW+QGRAUP
+    microphysics_scheme=kwargs.pop('microphysics_scheme',None)
     if microphysics_scheme in [None,'morrison','thompson']:
         list_variables=['QICE','QSNOW','QGRAUP']
     elif microphysics_scheme in ['SBM_full']:
@@ -378,9 +371,9 @@ def calculate_wrf_layerheight(filenames,**kwargs):
 def calculate_wrf_LWP(filenames,**kwargs):
     from iris.analysis import SUM
     LWC=derivewrfcube(filenames,'LWC',**kwargs)
-    microphysics_scheme=kwargs.pop('microphysics_scheme')
+    microphysics_scheme=kwargs.pop('microphysics_scheme',None)
     Airmass=derivewrfcube(filenames,'airmass_path',**kwargs)
-    LWP=(LWC*Airmass).collapsed(('bottom_top'),SUM)
+    LWP=(LWC*Airmass).collapsed(('model_level_number'),SUM)
     LWP.rename('liquid water path')
     #LWP.rename('atmosphere_mass_content_of_cloud_liquid_water')
     return LWP   
@@ -388,9 +381,9 @@ def calculate_wrf_LWP(filenames,**kwargs):
 def calculate_wrf_IWP(filenames,**kwargs):    
     from iris.analysis import SUM
     IWC=derivewrfcube(filenames,'IWC',**kwargs)
-    microphysics_scheme=kwargs.pop('microphysics_scheme')
+    microphysics_scheme=kwargs.pop('microphysics_scheme',None)
     Airmass=derivewrfcube(filenames,'airmass_path',**kwargs)
-    IWP=(IWC*Airmass).collapsed(('bottom_top'),SUM)
+    IWP=(IWC*Airmass).collapsed(('model_level_number'),SUM)
     IWP.rename('ice water path')
     #IWP.rename('atmosphere_mass_content_of_cloud_ice_water')
     return IWP
@@ -399,7 +392,7 @@ def calculate_wrf_IWV(filenames,**kwargs):
     from iris.analysis import SUM
     QVAPOR=loadwrfcube(filenames,'QVAPOR',**kwargs)
     Airmass=derivewrfcube(filenames,'airmass_path',**kwargs)
-    IWV=(QVAPOR*Airmass).collapsed(('bottom_top'),SUM)
+    IWV=(QVAPOR*Airmass).collapsed(('model_level_number'),SUM)
     IWV.rename('integrated water vapour')
     #IWV.rename('atmosphere_mass_content_of_water_vapor')
     return IWV
@@ -409,7 +402,7 @@ def integrate_cube(variable,Airmass_or_dz):
     name=variable.name()
     variable_integrated=(variable*Airmass_or_dz)
     variable_integrated.remove_coord('geopotential_height')
-    variable_integrated=variable_integrated.collapsed(('bottom_top'),SUM)
+    variable_integrated=variable_integrated.collapsed(('model_level_number'),SUM)
     variable_integrated.rename(name)
     return variable_integrated
     
@@ -417,7 +410,7 @@ def calculate_wrf_LWP_fromcubes(LWC,Airmass):
     from iris.analysis import SUM
     LW=(LWC*Airmass)
     LW.remove_coord('geopotential_height')
-    LWP=LW.collapsed(('bottom_top'),SUM)
+    LWP=LW.collapsed(('model_level_number'),SUM)
     LWP.rename('liquid water path')
     #LWP.rename('atmosphere_mass_content_of_cloud_liquid_water')
     return LWP
@@ -427,7 +420,7 @@ def calculate_wrf_IWP_fromcubes(IWC, Airmass):
     from iris.analysis import SUM
     IW=(IWC*Airmass)
     IW.remove_coord('geopotential_height')
-    IWP=IW.collapsed(('bottom_top'),SUM)
+    IWP=IW.collapsed(('model_level_number'),SUM)
     IWP.rename('ice water path')
     return IWP
 
@@ -435,7 +428,7 @@ def calculate_wrf_IWV_fromcubes(QVAPOR,Airmass):
     from iris.analysis import SUM
     VAPOR=(QVAPOR*Airmass)
     VAPOR.remove_coord('geopotential_height')
-    IWV=VAPOR.collapsed(('bottom_top'),SUM)
+    IWV=VAPOR.collapsed(('model_level_number'),SUM)
     IWV.rename('integrated water vapor')
     return IWV
 
@@ -444,7 +437,7 @@ def calculate_wrf_IWV_fromcubes(QVAPOR,Airmass):
 def calculate_wrf_maximum_reflectivity(filenames,**kwargs):
     from iris.analysis import MAX
     REFL_10CM=loadwrfcube(filenames,'REFL_10CM',**kwargs)
-    MAX_REFL_10CM=REFL_10CM.collapsed('bottom_top', MAX)
+    MAX_REFL_10CM=REFL_10CM.collapsed('model_level_number', MAX)
     MAX_REFL_10CM.rename('maximum reflectivity')
     return MAX_REFL_10CM
     
@@ -681,6 +674,8 @@ def add_dim_coordinates(filenames, variable,variable_cube,add_coordinates=None):
         elif (variable_dimensions[dim]=='bottom_top'):
            bottom_top=make_bottom_top_coordinate(BOTTOM_TOP_PATCH_END_UNSTAG)   
            variable_cube.add_dim_coord(bottom_top,dim)
+           model_level_number=make_model_level_number_coordinate(BOTTOM_TOP_PATCH_END_UNSTAG)
+           variable_cube.add_aux_coord(model_level_number,dim)
         elif variable_dimensions[dim]=='west_east_stag':
            west_east_stag=make_westeast_stag_coord(DX,WEST_EAST_PATCH_END_STAG)
            variable_cube.add_dim_coord(west_east_stag,dim)
@@ -690,6 +685,9 @@ def add_dim_coordinates(filenames, variable,variable_cube,add_coordinates=None):
         elif variable_dimensions[dim]=='bottom_top_stag':
            bottom_top_stag=make_bottom_top_stag_coordinate(BOTTOM_TOP_PATCH_END_STAG)   
            variable_cube.add_dim_coord(bottom_top_stag,dim)
+           model_level_number=make_model_level_number_coordinate(BOTTOM_TOP_PATCH_END_STAG)
+           variable_cube.add_aux_coord(model_level_number,dim)
+
     return variable_cube        
     
 def add_aux_coordinates_1dim(filenames, variable,variable_cube,add_coordinates=None):
@@ -930,6 +928,14 @@ def make_bottom_top_stag_coordinate(BOTTOM_TOP_PATCH_END_STAG):
     BOTTOM_TOP_W=arange(0,BOTTOM_TOP_PATCH_END_STAG)
     bottom_top_stag=coords.DimCoord(BOTTOM_TOP_W, standard_name=None, long_name='bottom_top_stag', var_name='bottom_top_stag', units='1', bounds=None, attributes=None, coord_system=None, circular=False)
     return bottom_top_stag
+
+def make_model_level_number_coordinate(BOTTOM_TOP_PATCH_END):
+    from iris import coords
+    from numpy import arange
+    MODEL_LEVEL_NUMBER=arange(0,BOTTOM_TOP_PATCH_END)
+    model_level_number=coords.AuxCoord(MODEL_LEVEL_NUMBER, standard_name='model_level_number', units='1')
+    return model_level_number
+
 
 def make_coord_system(attributes):
     from iris import coord_systems
