@@ -327,7 +327,7 @@ def calculate_wrf_IWC(filenames,**kwargs):
     microphysics_scheme=kwargs.pop('microphysics_scheme',None)
     if microphysics_scheme in [None,'morrison','thompson']:
         list_variables=['QICE','QSNOW','QGRAUP']
-    elif microphysics_scheme in ['SBM_full']:
+    elif microphysics_scheme in ['SBM_fast']:
         list_variables=['QICE','QSNOW','QGRAUP']
     elif microphysics_scheme in ["SBM_full"]:
         list_variables=['QICEC','QICED','QICEP','QSNOW','QGRAUP','QHAIL']
@@ -397,11 +397,13 @@ def calculate_wrf_IWV(filenames,**kwargs):
     #IWV.rename('atmosphere_mass_content_of_water_vapor')
     return IWV
 
-def integrate_cube(variable,Airmass_or_dz):
+def integrate_cube(variable,Airmass_or_dz,name=None):
     from iris.analysis import SUM
-    name=variable.name()
+    if name is None:
+        name='integrated_'+variable.name()
     variable_integrated=(variable*Airmass_or_dz)
-    variable_integrated.remove_coord('geopotential_height')
+    if 'geopotential_height' in [coord.name() for coord in  variable_integrated.coords()]:
+        variable_integrated.remove_coord('geopotential_height')
     variable_integrated=variable_integrated.collapsed(('model_level_number'),SUM)
     variable_integrated.rename(name)
     return variable_integrated
