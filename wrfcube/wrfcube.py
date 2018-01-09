@@ -329,7 +329,7 @@ def calculate_wrf_IWC(filenames,**kwargs):
         list_variables=['QICE','QSNOW','QGRAUP']
     elif microphysics_scheme in ['SBM_fast']:
         list_variables=['QICE','QSNOW','QGRAUP']
-    elif microphysics_scheme in ["SBM_full"]:
+    elif microphysics_scheme in ['SBM_full']:
         list_variables=['QICEC','QICED','QICEP','QSNOW','QGRAUP','QHAIL']
     IWC=load_sum(filenames,list_variables,**kwargs)
     IWC.rename('ice water content')
@@ -860,8 +860,7 @@ def add_aux_coordinates_multidim(filenames,variable_cube,**kwargs):
 def make_time_coord(filenames):
     from iris import load_cube,coords
     from cf_units import date2num,CALENDAR_STANDARD
-    from datetime import datetime,timedelta
-    from numpy import empty
+    from datetime import datetime
     Times= load_cube(filenames, 'Times')
     filetimes = Times.data   
 #    filetimelist = []   # Will contain list of times in seconds since model start time in file.
@@ -874,11 +873,15 @@ def make_time_coord(filenames):
 #        filetimelist.append(time_dt.seconds)
         timeobjlist.append(timeobj)
 #    time_days=empty(len(timeobjlist))
+    if timeobjlist[0]==datetime(1,1,1,0,0,0):
+        for i,time in enumerate(timeobjlist):
+            timeobjlist[i]=timeobjlist[i].replace(year=2000)
 #    #Include a different base_date for dates close to 0001-01-01 (idealised simulations)
-    if timeobjlist[0]<datetime(100,1,1):
-        base_date=datetime(1,1,1)
-    else:
-        base_date=datetime(1970,1,1)
+
+    # if timeobjlist[0]<datetime(100,1,1):
+    #     base_date=datetime(1,1,1)
+    # else:
+    base_date=datetime(1970,1,1)
     time_units='days since '+ base_date.strftime('%Y-%m-%d')
 #    for i in range(len(timeobjlist)):
 #        time_days[i]=(timeobjlist[i] - base_date).total_seconds() / timedelta(1).total_seconds()
