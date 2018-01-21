@@ -163,6 +163,7 @@ variable_list_derive=[
         'airmass_path',
         'layer_height',        
         'volume',
+        'area',
         'geopotential_height',
         'pressure',
         'relative_humidity',
@@ -352,10 +353,19 @@ def calculate_wrf_airmass(filenames,**kwargs):
     return Airmass
 
 def calculate_wrf_volume(filenames,**kwargs):
+    from numpy import diff
     layer_height=derivewrfcube(filenames,'layer_height',**kwargs)
-    volume=layer_height*layer_height.coord('projection_x_coordinate')*layer_height.coord('projection_y_coordinate')
-    volume.rename('cell volume')
+    volume=layer_height*diff(layer_height.coord('projection_x_coordinate').points[0:2])*diff(layer_height.coord('projection_y_coordinate').points[0:2])
+    volume.rename('cell_volume')
     return volume
+
+def calculate_wrf_area(filenames,**kwargs):
+    from numpy import diff
+    dummy=loadwrfcube(filenames,'OLR',**kwargs)
+    dummy.data[:]=1
+    area=dummy*diff(dummy.coord('projection_x_coordinate').points[0:2])*diff(dummy.coord('projection_y_coordinate').points[0:2])
+    area.rename('cell_area')
+    return area
 
     
 def calculate_wrf_layerheight(filenames,**kwargs):
