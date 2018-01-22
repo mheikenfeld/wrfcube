@@ -76,18 +76,13 @@ def loadwrfcube_single(filenames,variable,constraint=None,add_coordinates=None):
     
 def loadwrfcube_mult(filenames,variable,constraint=None,add_coordinates=None):
     from iris.cube import CubeList
-    #print(' in loadwrfcube_mult:',constraint)
     cube_list=[]
-#    print(' in loadwrfcube_mult: filenames= ',filenames)
-#    print(' in loadwrfcube_mult: variable= ',variable)
     for i in range(len(filenames)):
         cube_list.append(loadwrfcube_single(filenames[i],variable,add_coordinates=add_coordinates) )
     for member in cube_list:
         member.attributes={}
     variable_cubes=CubeList(cube_list)
     variable_cube=variable_cubes.concatenate_cube()
-   # print(variable)
-    #print(variable_cube)
     variable_cube=variable_cube.extract(constraint)
     return variable_cube
 
@@ -167,7 +162,9 @@ variable_list_derive=[
         'geopotential_height',
         'pressure',
         'relative_humidity',
-        'w_at_T',
+        'w_unstaggered',
+        'u_unstaggered',
+        'v_unstaggered',
         'maximum_reflectivity' ,
         'surface_precipitation',
         ]
@@ -246,10 +243,22 @@ def derivewrfcube(filenames,variable,**kwargs):
     elif variable == 'relative_humidity':    
         variable_cube=calculate_wrf_relativehumidity(filenames,**kwargs)
         #variable_cube_out=addcoordinates(filenames, 'T',variable_cube,add_coordinates)
-    elif variable == 'w_at_T':    
-        variable_cube=calculate_wrf_w_at_T(filenames,**kwargs)
+        
+    elif variable == 'w_unstaggered':    
+        variable_cube=calculate_wrf_w_unstaggered(filenames,**kwargs)
         replace_cube=loadwrfcube(filenames,'T',**kwargs)
-        variable_cube=replacecoordinates(variable_cube,replace_cube)        
+        variable_cube=replacecoordinates(variable_cube,replace_cube)
+        
+    elif variable == 'u_unstaggered':    
+        variable_cube=calculate_wrf_u_unstaggered(filenames,**kwargs)
+        replace_cube=loadwrfcube(filenames,'T',**kwargs)
+        variable_cube=replacecoordinates(variable_cube,replace_cube)
+        
+    elif variable == 'v_unstaggered':    
+        variable_cube=calculate_wrf_v_unstaggered(filenames,**kwargs)
+        replace_cube=loadwrfcube(filenames,'T',**kwargs)
+        variable_cube=replacecoordinates(variable_cube,replace_cube)
+
     elif variable == 'surface_precipitation':
         variable_cube=calculate_wrf_surface_precipitation(filenames,**kwargs)
         #variable_cube_out=addcoordinates(filenames, 'T',variable_cube,add_coordinates)
@@ -453,14 +462,30 @@ def calculate_wrf_maximum_reflectivity(filenames,**kwargs):
     MAX_REFL_10CM.rename('maximum reflectivity')
     return MAX_REFL_10CM
     
-def calculate_wrf_w_at_T(filenames,**kwargs):
+def calculate_wrf_w_unstaggered(filenames,**kwargs):
     from iris import cube,Constraint
     w=loadwrfcube(filenames, 'W',**kwargs)
     constraint_1=Constraint(bottom_top_stag=lambda cell:  cell > w.coord('bottom_top_stag').points[0])
     constraint_2=Constraint(bottom_top_stag=lambda cell:  cell < w.coord('bottom_top_stag').points[-1])
-    w_at_T = cube.Cube(0.5*(w.extract(constraint_1).data+w.extract(constraint_2).data),var_name='w',long_name='vertical velocity on T grid', units='m/s')
+    w_unstaggered = cube.Cube(0.5*(w.extract(constraint_1).data+w.extract(constraint_2).data),standard_name='upward_air_velocity', units='m/s')
+    return w_unstaggered
 
-    return w_at_T
+def calculate_wrf_u_unstaggered(filenames,**kwargs):
+    from iris import cube,Constraint
+    u=loadwrfcube(filenames, 'U',**kwargs)
+    constraint_1=Constraint(west_east_stag=lambda cell:  cell > u.coord('west_east_stag').points[0])
+    constraint_2=Constraint(west_east_stag=lambda cell:  cell < u.coord('west_east_stag').points[-1])
+    u_unstaggered = cube.Cube(0.5*(u.extract(constraint_1).data+u.extract(constraint_2).data),standard_name='x_wind', units='m/s')
+    return u_unstaggered
+
+def calculate_wrf_v_unstaggered(filenames,**kwargs):
+    from iris import cube,Constraint
+    v=loadwrfcube(filenames, 'V',**kwargs)
+    constraint_1=Constraint(south_north_stag=lambda cell:  cell > v.coord('south_north_stag').points[0])
+    constraint_2=Constraint(south_north_stag=lambda cell:  cell < v.coord('south_north_stag').points[-1])
+    v_unstaggered = cube.Cube(0.5*(v.extract(constraint_1).data+v.extract(constraint_2).data),standard_name='y_wind', units='m/s')
+    return v_unstaggered
+
 
 def calculate_wrf_density(filenames,**kwargs):
     from iris import coords
