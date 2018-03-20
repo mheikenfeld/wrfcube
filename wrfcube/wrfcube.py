@@ -735,6 +735,7 @@ def add_dim_coordinates(filenames, variable,variable_cube,add_coordinates=None):
 def add_aux_coordinates_1dim(filenames, variable,variable_cube,add_coordinates=None):
     from netCDF4 import Dataset  # http://code.google.com/p/netcdf4-python/
     from iris import load_cube
+    from iris.coords import AuxCoord
     variable_cube_dim= load_cube(filenames, variable)
     attributes=variable_cube_dim.attributes
     nc_id=Dataset(filenames)
@@ -762,31 +763,26 @@ def add_aux_coordinates_1dim(filenames, variable,variable_cube,add_coordinates=N
                 if (coords[dim].name()=='west_east'):
                     projection_x_coord=make_x_coord(DX,WEST_EAST_PATCH_END_UNSTAG,coord_system=coord_system)
                     variable_cube.add_aux_coord(projection_x_coord,dim)
-                    x_coord=iris.coords.AuxCoord(cube_out.coord('west_east').points,long_name='x',units=1)
-                    cube_out.add_aux_coord(x_coord,data_dims=cube_out.coord_dims('west_east'))
+                    x_coord=AuxCoord(variable_cube.coord('west_east').points,long_name='x',units=1)
+                    variable_cube.add_aux_coord(x_coord,data_dims=variable_cube.coord_dims('west_east'))
 
                 elif (coords[dim].name()=='south_north'):
                     projection_y_coord=make_y_coord(DY, SOUTH_NORTH_PATCH_END_UNSTAG,coord_system=coord_system)
                     variable_cube.add_aux_coord(projection_y_coord,dim)    
-                    y_coord=iris.coords.AuxCoord(cube_out.coord('south_north_stag').points,long_name='y',units=1)
-                    cube_out.add_aux_coord(x_coord,data_dims=cube_out.coord_dims('south_north_stag'))
+                    y_coord=AuxCoord(variable_cube.coord('south_north_stag').points,long_name='y',units=1)
+                    variable_cube.add_aux_coord(y_coord,data_dims=variable_cube.coord_dims('south_north_stag'))
 
                 elif (coords[dim].name()=='west_east_stag'):
                     projection_x_stag_coord=make_x_stag_coord(DX,WEST_EAST_PATCH_END_STAG,coord_system=coord_system)
                     variable_cube.add_aux_coord(projection_x_stag_coord,dim)
-                    x_coord=iris.coords.AuxCoord(cube_out.coord('west_east').points,long_name='x',units=1)
-                    cube_out.add_aux_coord(x_coord,data_dims=cube_out.coord_dims('west_east'))
+                    x_coord=AuxCoord(variable_cube.coord('west_east').points,long_name='x',units=1)
+                    variable_cube.add_aux_coord(x_coord,data_dims=variable_cube.coord_dims('west_east'))
 
                 elif coords[dim].name()=='south_north_stag':
                     projection_y_stag_coord=make_y_stag_coord(DY, SOUTH_NORTH_PATCH_END_STAG,coord_system=coord_system)
                     variable_cube.add_aux_coord(projection_y_stag_coord,dim)                    
-                    y_coord=iris.coords.AuxCoord(cube_out.coord('south_north_stag').points,long_name='y',units=1)
-                    cube_out.add_aux_coord(x_coord,data_dims=cube_out.coord_dims('south_north_stag'))
-
-    return variable_cube               
-        
-    g_name='x',units=1)
-                    cube_out.add_aux_coord(x_coord,data_dims=cube_out.coord_dims('west_east'))
+                    y_coord=AuxCoord(variable_cube.coord('south_north_stag').points,long_name='y',units=1)
+                    variable_cube.add_aux_coord(y_coord,data_dims=variable_cube.coord_dims('south_north_stag'))        
 
     return variable_cube               
         
