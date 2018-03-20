@@ -769,14 +769,14 @@ def add_aux_coordinates_1dim(filenames, variable,variable_cube,add_coordinates=N
                 elif (coords[dim].name()=='south_north'):
                     projection_y_coord=make_y_coord(DY, SOUTH_NORTH_PATCH_END_UNSTAG,coord_system=coord_system)
                     variable_cube.add_aux_coord(projection_y_coord,dim)    
-                    y_coord=AuxCoord(variable_cube.coord('south_north_stag').points,long_name='y',units=1)
-                    variable_cube.add_aux_coord(y_coord,data_dims=variable_cube.coord_dims('south_north_stag'))
+                    y_coord=AuxCoord(variable_cube.coord('south_north').points,long_name='y',units=1)
+                    variable_cube.add_aux_coord(y_coord,data_dims=variable_cube.coord_dims('south_north'))
 
                 elif (coords[dim].name()=='west_east_stag'):
                     projection_x_stag_coord=make_x_stag_coord(DX,WEST_EAST_PATCH_END_STAG,coord_system=coord_system)
                     variable_cube.add_aux_coord(projection_x_stag_coord,dim)
-                    x_coord=AuxCoord(variable_cube.coord('west_east').points,long_name='x',units=1)
-                    variable_cube.add_aux_coord(x_coord,data_dims=variable_cube.coord_dims('west_east'))
+                    x_coord=AuxCoord(variable_cube.coord('west_east_stag').points,long_name='x',units=1)
+                    variable_cube.add_aux_coord(x_coord,data_dims=variable_cube.coord_dims('west_east_stag'))
 
                 elif coords[dim].name()=='south_north_stag':
                     projection_y_stag_coord=make_y_stag_coord(DY, SOUTH_NORTH_PATCH_END_STAG,coord_system=coord_system)
