@@ -9,7 +9,11 @@ def load(filenames,variable,mode='auto',**kwargs):
             variable_load=variable_dict_pseudonym[variable]
             variable_cube=loadwrfcube(filenames,variable_load,**kwargs)
         else:
-            raise SystemExit('variable not found')
+            print('variable: ',variable)
+            print('filenames[0]: ',filenames[0])
+            print('variable_list_file: ',variable_list_file)
+
+            raise SystemExit('variable' + variable+ ' not found')
 
     elif mode=='file':
         variable_list_file=variable_list(filenames)
@@ -22,7 +26,7 @@ def load(filenames,variable,mode='auto',**kwargs):
         variable_cube=loadwrfcube(filenames,variable_load,**kwargs)
     else:
        print("mode=",mode)
-       raise SystemExit('unknown mode')
+       raise SystemExit('unknown mode: '+mode)
 
     return variable_cube
 
@@ -72,35 +76,11 @@ def loadwrfcube_mult(filenames,variable,constraint=None,add_coordinates=None):
         member.attributes={}
     variable_cubes=CubeList(cube_list)
     variable_cube=variable_cubes.concatenate_cube()
-    # if 'add_coordinates' in kwargs:
-    #     add_coordinates=kwargs['add_coordinates']
-    # else:
-    #     add_coordinates=None
-    # if add_coordinates != None:
-    # variable_cube=add_aux_coordinates_multidim(filenames,variable_cube,constraint=constraint,add_coordinates=add_coordinates) 
-
+    if add_coordinates != None:
+        variable_cube=add_aux_coordinates_multidim(filenames,variable_cube,constraint=None,add_coordinates=add_coordinates) 
     variable_cube=variable_cube.extract(constraint)
+
     return variable_cube
-
-    
-#def loadwrfcube_dimcoord(filenames,variable,**kwargs):
-#    from iris import load_cube     
-#    variable_cube=load_cube(filenames,variable)
-#    for coord in variable_cube.coords():
-#        variable_cube.remove_coord(coord.name())
-#    variable_cube=add_dim_coordinates(filenames, variable,variable_cube,**kwargs)
-#    #variable_cube=variable_cube.extract(constraint)
-##    variable_cube_data=variable_cube.core_data()
-#    return variable_cube
-
-    
-#def loadwrfcube_nocoord(filenames,variable):
-#    from iris import load_cube   
-#    variable_cube=load_cube(filenames,variable)
-#    for coord in variable_cube.coords():
-#        variable_cube.remove_coord(coord.name())
-##    variable_cube_data=variable_cube.data
-#    return variable_cube
 
 def derivewrfcubelist(filenames,variable_list,**kwargs):
     from iris.cube import CubeList
@@ -250,14 +230,14 @@ def derivewrfcube(filenames,variable,**kwargs):
         variable_cube=calculate_wrf_u_unstaggered(filenames,**kwargs)
         replace_cube=loadwrfcube(filenames,'T',**kwargs)
         variable_cube=replacecoordinates(variable_cube,replace_cube)
-        variable_cube.extract(constraint)
-        
+        variable_cube=variable_cube.extract(constraint)
+
     elif variable == 'v_unstaggered':    
         constraint=kwargs.pop('constraint',None)
         variable_cube=calculate_wrf_v_unstaggered(filenames,**kwargs)
         replace_cube=loadwrfcube(filenames,'T',**kwargs)
         variable_cube=replacecoordinates(variable_cube,replace_cube)
-        variable_cube.extract(constraint)
+        variable_cube=variable_cube.extract(constraint)
 
     elif variable == 'surface_precipitation':
         variable_cube=calculate_wrf_surface_precipitation(filenames,**kwargs)
@@ -272,7 +252,7 @@ def calculate_wrf_surface_precipitation(filenames,constraint=None,add_coordinate
     import numpy as np
     RAINNC= loadwrfcube(filenames, 'RAINNC',add_coordinates=add_coordinates)
     dt=(RAINNC.coords('time')[0].points[1]-RAINNC.coords('time')[0].points[0])*24
-    rainnc_inst=np.concatenate((RAINNC.data[[1],:,:]-RAINNC.data[[0],:,:],RAINNC.data[1:,:,:]-RAINNC.data[0:-1:,:,:]),axis=0)/dt
+    rainnc_inst=np.concatenate((RAINNC.core_data()[[1],:,:]-RAINNC.core_data()[[0],:,:],RAINNC.core_data()[1:,:,:]-RAINNC.core_data()[0:-1:,:,:]),axis=0)/dt
     RAINNC_inst=RAINNC
     RAINNC_inst.data=rainnc_inst
     RAINNC_inst.rename('surface_precipitation')
@@ -313,8 +293,7 @@ def calculate_wrf_relativehumidity(filenames,**kwargs):
     T=derivewrfcube(filenames,'temperature',**kwargs)
     p=derivewrfcube(filenames,'pressure',**kwargs)
     p.convert_units('Pa')
-    p=p.data
-    rh=calculate_RH(QVAPOR.data,T.data,p.data)
+    rh=calculate_RH(QVAPOR.core_data(),T.core_data(),p.core_data())
     RH=cube.Cube(rh, units='percent',long_name='realtive humidity')
     return RH   
     
@@ -364,7 +343,7 @@ def calculate_wrf_airmass(filenames,**kwargs):
 def calculate_wrf_volume(filenames,**kwargs):
     from numpy import diff
     layer_height=derivewrfcube(filenames,'layer_height',**kwargs)
-    volume=layer_height*diff(layer_height.coord('projection_x_coordinate').points[0:2])*diff(layer_height.coord('projection_y_coordinate').points[0:2])
+    volume=layer_height*diff(layer_height.coord('projection_x_coordinate').points[0:2])*diff(layer_height.coord('projection_y_coordinate').core_points()[0:2])
     volume.rename('cell_volume')
     return volume
 
@@ -381,7 +360,7 @@ def calculate_wrf_layerheight(filenames,**kwargs):
     from iris import Constraint
     zH=derivewrfcube(filenames,'geopotential_height_stag',**kwargs)
     bottom_top_stag=zH.coord('bottom_top_stag').points
-    layer_height = (zH.extract(Constraint(bottom_top_stag=bottom_top_stag[1:]))-zH.extract(Constraint(bottom_top_stag=bottom_top_stag[:-1])).data) 
+    layer_height =zH.extract(Constraint(bottom_top_stag=bottom_top_stag[1:]))-zH.extract(Constraint(bottom_top_stag=bottom_top_stag[:-1])).core_data()
     layer_height.rename('layer_height')
     replace_cube=loadwrfcube(filenames,'T',**kwargs)
     layer_height=replacecoordinates(layer_height,replace_cube)
@@ -578,8 +557,10 @@ def array_interp_reduceby1(array,dim):
 
 def cube_interp_extendby1(cube_in,coord):
     import numpy as np
+    import dask.array as da
+
     dim=cube_in.coord_dims(coord)[0]
-    cube_data=cube_in.data
+    cube_data=cube_in.core_data()
     ndim=cube_in.ndim
     idx1=[slice(None)] * (ndim)
     idx2=[slice(None)] * (ndim)
@@ -592,8 +573,8 @@ def cube_interp_extendby1(cube_in,coord):
     cube_data[idx_start]
     cube_data[idx1]
     cube_data[idx2]
-    cube_data[idx_end]    
-    array_out=np.concatenate((cube_data[idx_start],0.5*(cube_data[idx1]+cube_data[idx2]),cube_data[idx_end]),axis=dim)
+    cube_data[idx_end]
+    array_out=da.concatenate((cube_data[idx_start],0.5*(cube_data[idx1]+cube_data[idx2]),cube_data[idx_end]),axis=dim)
 
 #    idx1[dim]=slice(1)
 #    array_out=np.concatenate((cube_data[idx1],cube_data),axis=dim)
@@ -634,7 +615,6 @@ def calculate_wrf_geopotential_height(filenames,**kwargs):
     bottom_top_stag=zH.coord('bottom_top_stag').points
     z = 0.5*(zH.extract(Constraint(bottom_top_stag=bottom_top_stag[:-1]))+zH.extract(Constraint(bottom_top_stag=bottom_top_stag[1:])).core_data()) 
     z.rename('geopotential_height')
-    #z = 0.5*(zH[:,:-1,:,:]+zH.data[:,1:,:,:])
     return z
     
 def calculate_wrf_geopotential_height_ystag(filenames,**kwargs):
@@ -807,7 +787,6 @@ def add_aux_coordinates_multidim(filenames,variable_cube,add_coordinates=None, c
         add_coordinates=[]
         add_coordinates.append(add_coordinates1)
         
-    
     for coordinate in add_coordinates:
 
         if coordinate=='z':                
