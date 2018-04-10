@@ -154,7 +154,7 @@ def derivewrfcube(filenames,variable,**kwargs):
     elif variable in ['temperature','air_temperature']:
         variable_cube=calculate_wrf_temperature(filenames,**kwargs)
         #variable_cube_out=addcoordinates(filenames, 'T',variable_cube,add_coordinates)
-    elif variable == 'density':
+    elif variable in ['density','air_density']:
         variable_cube=calculate_wrf_density(filenames,**kwargs)
         #variable_cube_out=addcoordinates(filenames, 'T',variable_cube,add_coordinates)
     elif variable == 'LWC':    
