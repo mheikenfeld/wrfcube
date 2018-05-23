@@ -1,3 +1,9 @@
+import logging
+import warnings
+warnings.filterwarnings('ignore', category=UserWarning, append=True)
+warnings.filterwarnings('ignore', category=RuntimeWarning, append=True)
+warnings.filterwarnings('ignore', category=FutureWarning, append=True)
+
 def load(filenames,variable,mode='auto',**kwargs):
     if mode=='auto':
         variable_list_file=variable_list(filenames)
@@ -342,16 +348,29 @@ def calculate_wrf_airmass(filenames,**kwargs):
 
 def calculate_wrf_volume(filenames,**kwargs):
     from numpy import diff
+    from iris.coords import AuxCoord
     layer_height=derivewrfcube(filenames,'layer_height',**kwargs)
-    volume=layer_height*diff(layer_height.coord('projection_x_coordinate').points[0:2])*diff(layer_height.coord('projection_y_coordinate').core_points()[0:2])
+    layer_height.add_aux_coord(AuxCoord(diff(layer_height.coord('projection_x_coordinate').bounds).flatten(),long_name='x_diff',units=layer_height.coord('projection_y_coordinate').units),
+                                        data_dims=layer_height.coord_dims('projection_x_coordinate'))
+    layer_height.add_aux_coord(AuxCoord(diff(layer_height.coord('projection_y_coordinate').bounds).flatten(),long_name='y_diff',units=layer_height.coord('projection_y_coordinate').units),
+                                        data_dims=layer_height.coord_dims('projection_y_coordinate'))
+    volume=layer_height*layer_height.coord('x_diff')*layer_height.coord('y_diff')
+    volume.remove_coord('x_diff')
+    volume.remove_coord('y_diff')
     volume.rename('cell_volume')
     return volume
 
 def calculate_wrf_area(filenames,**kwargs):
     from numpy import diff
+    from iris.coords import AuxCoord
     dummy=loadwrfcube(filenames,'OLR',**kwargs)
     dummy.data[:]=1
-    area=dummy*diff(dummy.coord('projection_x_coordinate').points[0:2])*diff(dummy.coord('projection_y_coordinate').points[0:2])
+    dummy.units='1'
+    dummy.add_aux_coord(AuxCoord(diff(dummy.coord('projection_x_coordinate').bounds).flatten(),long_name='x_diff',units=dummy.coord('projection_y_coordinate').units),
+                                        data_dims=dummy.coord_dims('projection_x_coordinate'))
+    dummy.add_aux_coord(AuxCoord(diff(dummy.coord('projection_y_coordinate').bounds).flatten(),long_name='y_diff',units=dummy.coord('projection_y_coordinate').units),
+                                        data_dims=dummy.coord_dims('projection_y_coordinate'))
+    area=dummy*dummy.coord('x_diff')*dummy.coord('y_diff')
     area.rename('cell_area')
     return area
 
@@ -653,16 +672,19 @@ def replacecoordinates(variable_cube,replace_cube):
 
     
 def addcoordinates(filenames, variable,variable_cube,**kwargs):
-    if 'add_coordinates' in kwargs:
-        add_coordinates=kwargs['add_coordinates']
-    else:
-        add_coordinates=None
-        
-    if add_coordinates==None:
-        variable_cube=add_dim_coordinates(filenames, variable,variable_cube,**kwargs)
-    else:
-        variable_cube=add_dim_coordinates(filenames, variable,variable_cube,**kwargs)
-        variable_cube=add_aux_coordinates_1dim(filenames, variable,variable_cube,**kwargs)
+#    if 'add_coordinates' in kwargs:
+#        add_coordinates=kwargs['add_coordinates']
+#    else:
+#        add_coordinates=None
+#        
+#    if add_coordinates==None:
+#        variable_cube=add_dim_coordinates(filenames, variable,variable_cube,**kwargs)
+#    else:
+#        variable_cube=add_dim_coordinates(filenames, variable,variable_cube,**kwargs)
+#        variable_cube=add_aux_coordinates_1dim(filenames, variable,variable_cube,**kwargs)
+    variable_cube=add_dim_coordinates(filenames, variable,variable_cube,**kwargs)
+    variable_cube=add_aux_coordinates_1dim(filenames, variable,variable_cube)
+
     return variable_cube
 
 def add_dim_coordinates(filenames, variable,variable_cube,add_coordinates=None):
@@ -712,7 +734,7 @@ def add_dim_coordinates(filenames, variable,variable_cube,add_coordinates=None):
 
     return variable_cube        
     
-def add_aux_coordinates_1dim(filenames, variable,variable_cube,add_coordinates=None):
+def add_aux_coordinates_1dim(filenames, variable,variable_cube):#,add_coordinates=None):
     from netCDF4 import Dataset  # http://code.google.com/p/netcdf4-python/
     from iris import load_cube
     from iris.coords import AuxCoord
@@ -733,36 +755,36 @@ def add_aux_coordinates_1dim(filenames, variable,variable_cube,add_coordinates=N
     #BOTTOM_TOP_PATCH_END_STAG=attributes['BOTTOM-TOP_PATCH_END_STAG']
     coord_system=make_coord_system(attributes)
     coords=variable_cube.coords()
-    if type(add_coordinates)!=list:
-        add_coordinates1=add_coordinates
-        add_coordinates=[]
-        add_coordinates.append(add_coordinates1)
-    for coordinate in add_coordinates:
-        if coordinate=='xy':
-            for dim in range(len(coords)):            
-                if (coords[dim].name()=='west_east'):
-                    projection_x_coord=make_x_coord(DX,WEST_EAST_PATCH_END_UNSTAG,coord_system=coord_system)
-                    variable_cube.add_aux_coord(projection_x_coord,dim)
-                    x_coord=AuxCoord(variable_cube.coord('west_east').points,long_name='x',units=1)
-                    variable_cube.add_aux_coord(x_coord,data_dims=variable_cube.coord_dims('west_east'))
+#    if type(add_coordinates)!=list:
+#        add_coordinates1=add_coordinates
+#        add_coordinates=[]
+#        add_coordinates.append(add_coordinates1)
+#    for coordinate in add_coordinates:
+#        if coordinate=='xy':
+    for dim in range(len(coords)):            
+        if (coords[dim].name()=='west_east'):
+            projection_x_coord=make_x_coord(DX,WEST_EAST_PATCH_END_UNSTAG,coord_system=coord_system)
+            variable_cube.add_aux_coord(projection_x_coord,dim)
+            x_coord=AuxCoord(variable_cube.coord('west_east').points,long_name='x',units=1)
+            variable_cube.add_aux_coord(x_coord,data_dims=variable_cube.coord_dims('west_east'))
 
-                elif (coords[dim].name()=='south_north'):
-                    projection_y_coord=make_y_coord(DY, SOUTH_NORTH_PATCH_END_UNSTAG,coord_system=coord_system)
-                    variable_cube.add_aux_coord(projection_y_coord,dim)    
-                    y_coord=AuxCoord(variable_cube.coord('south_north').points,long_name='y',units=1)
-                    variable_cube.add_aux_coord(y_coord,data_dims=variable_cube.coord_dims('south_north'))
+        elif (coords[dim].name()=='south_north'):
+            projection_y_coord=make_y_coord(DY, SOUTH_NORTH_PATCH_END_UNSTAG,coord_system=coord_system)
+            variable_cube.add_aux_coord(projection_y_coord,dim)    
+            y_coord=AuxCoord(variable_cube.coord('south_north').points,long_name='y',units=1)
+            variable_cube.add_aux_coord(y_coord,data_dims=variable_cube.coord_dims('south_north'))
 
-                elif (coords[dim].name()=='west_east_stag'):
-                    projection_x_stag_coord=make_x_stag_coord(DX,WEST_EAST_PATCH_END_STAG,coord_system=coord_system)
-                    variable_cube.add_aux_coord(projection_x_stag_coord,dim)
-                    x_coord=AuxCoord(variable_cube.coord('west_east_stag').points,long_name='x',units=1)
-                    variable_cube.add_aux_coord(x_coord,data_dims=variable_cube.coord_dims('west_east_stag'))
+        elif (coords[dim].name()=='west_east_stag'):
+            projection_x_stag_coord=make_x_stag_coord(DX,WEST_EAST_PATCH_END_STAG,coord_system=coord_system)
+            variable_cube.add_aux_coord(projection_x_stag_coord,dim)
+            x_coord=AuxCoord(variable_cube.coord('west_east_stag').points,long_name='x',units=1)
+            variable_cube.add_aux_coord(x_coord,data_dims=variable_cube.coord_dims('west_east_stag'))
 
-                elif coords[dim].name()=='south_north_stag':
-                    projection_y_stag_coord=make_y_stag_coord(DY, SOUTH_NORTH_PATCH_END_STAG,coord_system=coord_system)
-                    variable_cube.add_aux_coord(projection_y_stag_coord,dim)                    
-                    y_coord=AuxCoord(variable_cube.coord('south_north_stag').points,long_name='y',units=1)
-                    variable_cube.add_aux_coord(y_coord,data_dims=variable_cube.coord_dims('south_north_stag'))        
+        elif coords[dim].name()=='south_north_stag':
+            projection_y_stag_coord=make_y_stag_coord(DY, SOUTH_NORTH_PATCH_END_STAG,coord_system=coord_system)
+            variable_cube.add_aux_coord(projection_y_stag_coord,dim)                    
+            y_coord=AuxCoord(variable_cube.coord('south_north_stag').points,long_name='y',units=1)
+            variable_cube.add_aux_coord(y_coord,data_dims=variable_cube.coord_dims('south_north_stag'))        
 
     return variable_cube               
         
@@ -1016,9 +1038,11 @@ def make_coord_system(attributes):
 
 def make_x_coord(DX,WEST_EAST_PATCH_END_UNSTAG,coord_system):
     from iris import coords
-    from numpy import arange
-    X=DX*(arange(0,WEST_EAST_PATCH_END_UNSTAG)-0.5)
-    x_coord=coords.AuxCoord(X, standard_name='projection_x_coordinate', long_name='x', var_name='x', units='m', bounds=None, attributes=None, coord_system=coord_system)
+    from numpy import arange,array,transpose
+    X=DX*(arange(0,WEST_EAST_PATCH_END_UNSTAG)+0.5)
+    bounds=transpose(array([DX*(arange(0,WEST_EAST_PATCH_END_UNSTAG)),DX*(arange(0,WEST_EAST_PATCH_END_UNSTAG)+1)]))
+    x_coord=coords.AuxCoord(X, standard_name='projection_x_coordinate', long_name='x', var_name='x', units='m',
+                            bounds=bounds, attributes=None, coord_system=coord_system)
     #x_coord.add_dim_coord(west_east,0)
     return x_coord
 
@@ -1032,9 +1056,11 @@ def make_x_stag_coord(DX,WEST_EAST_PATCH_END_STAG,coord_system=None):
 
 def make_y_coord(DY,SOUTH_NORTH_PATCH_END_UNSTAG,coord_system=None):
     from iris import coords
-    from numpy import arange    #DY=attributes['DY']
-    Y=DY*(arange(0,SOUTH_NORTH_PATCH_END_UNSTAG)-0.5)
-    y_coord=coords.AuxCoord(Y, standard_name='projection_y_coordinate', long_name='y', var_name='y', units='m', bounds=None, attributes=None, coord_system=coord_system)
+    from numpy import arange,array,transpose   #DY=attributes['DY']
+    Y=DY*(arange(0,SOUTH_NORTH_PATCH_END_UNSTAG)+0.5)
+    bounds=transpose(array([DY*(arange(0,SOUTH_NORTH_PATCH_END_UNSTAG)),DY*(arange(0,SOUTH_NORTH_PATCH_END_UNSTAG)+1)]))
+    y_coord=coords.AuxCoord(Y, standard_name='projection_y_coordinate', long_name='y', var_name='y', units='m', 
+                            bounds=bounds, attributes=None, coord_system=coord_system)
     #y_coord.add_dim_coord(south_north,0)
     return y_coord
     
