@@ -64,8 +64,9 @@ def loadwrfcube(filenames,variable,**kwargs):
 def loadwrfcube_single(filenames,variable,constraint=None,add_coordinates=None):
     from iris import load_cube 
     variable_cube=load_cube(filenames,variable)
-    variable_cube=addcoordinates(filenames, variable,variable_cube,add_coordinates=add_coordinates)        
-    variable_cube=variable_cube.extract(constraint)
+#    variable_cube=addcoordinates(filenames, variable,variable_cube,add_coordinates=add_coordinates)
+    variable_cube=add_time_coordinate(filenames, variable,variable_cube)
+#    variable_cube=variable_cube.extract(constraint)
     return variable_cube
         
     
@@ -78,6 +79,7 @@ def loadwrfcube_mult(filenames,variable,constraint=None,add_coordinates=None):
         member.attributes={}
     variable_cubes=CubeList(cube_list)
     variable_cube=variable_cubes.concatenate_cube()
+    variable_cube=addcoordinates(filenames[0], variable,variable_cube,add_coordinates=add_coordinates)        
     if add_coordinates != None:
         variable_cube=add_aux_coordinates_multidim(filenames,variable_cube,constraint=None,add_coordinates=add_coordinates) 
     variable_cube=variable_cube.extract(constraint)
@@ -343,14 +345,17 @@ def calculate_wrf_airmass(filenames,**kwargs):
     return Airmass
 
 def calculate_wrf_volume(filenames,**kwargs):
-    from numpy import diff
     from iris.coords import AuxCoord
     layer_height=derivewrfcube(filenames,'layer_height',**kwargs)
-    layer_height.add_aux_coord(AuxCoord(diff(layer_height.coord('projection_x_coordinate').bounds).flatten(),long_name='x_diff',units=layer_height.coord('projection_y_coordinate').units),
-                                        data_dims=layer_height.coord_dims('projection_x_coordinate'))
-    layer_height.add_aux_coord(AuxCoord(diff(layer_height.coord('projection_y_coordinate').bounds).flatten(),long_name='y_diff',units=layer_height.coord('projection_y_coordinate').units),
+    layer_height.add_aux_coord(AuxCoord(layer_height.coord('projection_x_coordinate').bounds[...,1]-layer_height.coord('projection_x_coordinate').bounds[...,0],
+                                       long_name='x_diff',units=layer_height.coord('projection_y_coordinate').units),
+                                       data_dims=layer_height.coord_dims('projection_x_coordinate'))
+    layer_height.add_aux_coord(AuxCoord(layer_height.coord('projection_y_coordinate').bounds[...,1]-layer_height.coord('projection_y_coordinate').bounds[...,0],
+                                        long_name='y_diff',units=layer_height.coord('projection_y_coordinate').units),
                                         data_dims=layer_height.coord_dims('projection_y_coordinate'))
     volume=layer_height*layer_height.coord('x_diff')*layer_height.coord('y_diff')
+    
+    
     volume.remove_coord('x_diff')
     volume.remove_coord('y_diff')
     volume.rename('cell_volume')
@@ -683,6 +688,12 @@ def addcoordinates(filenames, variable,variable_cube,**kwargs):
 
     return variable_cube
 
+def add_time_coordinate(filenames, variable,variable_cube):
+    time=make_time_coord(filenames)
+    variable_cube.add_dim_coord(time,variable_cube.coord_dims('XTIME')[0])
+    return variable_cube
+
+
 def add_dim_coordinates(filenames, variable,variable_cube,add_coordinates=None):
     from netCDF4 import Dataset  # http://code.google.com/p/netcdf4-python/
     from iris import load_cube
@@ -702,10 +713,10 @@ def add_dim_coordinates(filenames, variable,variable_cube,add_coordinates=None):
     SOUTH_NORTH_PATCH_END_STAG=attributes['SOUTH-NORTH_PATCH_END_STAG']
     BOTTOM_TOP_PATCH_END_STAG=attributes['BOTTOM-TOP_PATCH_END_STAG']
     for dim in range(len(variable_dimensions)):
-        if (variable_dimensions[dim]=='Time'):
-           time=make_time_coord(filenames)
-           variable_cube.add_dim_coord(time,dim)
-        elif (variable_dimensions[dim]=='west_east'):
+#        if (variable_dimensions[dim]=='Time'):
+#           time=make_time_coord(filenames)
+#           variable_cube.add_dim_coord(time,dim)
+        if (variable_dimensions[dim]=='west_east'):
             west_east=make_westeast_coord(DX,WEST_EAST_PATCH_END_UNSTAG)
             variable_cube.add_dim_coord(west_east,dim)
         elif (variable_dimensions[dim]=='south_north'):
