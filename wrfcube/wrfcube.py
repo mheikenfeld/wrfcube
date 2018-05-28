@@ -36,16 +36,12 @@ def load(filenames,variable,mode='auto',**kwargs):
 
     return variable_cube
 
-
-
-
 def loadwrfcubelist(filenames,variable_list,**kwargs):
     from iris.cube import CubeList
     cubelist_out=CubeList()  
     for variable in variable_list:
         cubelist_out.append(loadwrfcube(filenames,variable,**kwargs))
     return(cubelist_out)
-
 
 def loadwrfcube(filenames,variable,**kwargs):
     if type(filenames) is list:
