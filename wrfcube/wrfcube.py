@@ -45,7 +45,7 @@ def loadwrfcubelist(filenames,variable_list,**kwargs):
 
 def loadwrfcube(filenames,variable,**kwargs):
     if type(filenames) is list:
-        variable_cube=loadwrfcube_mult(filenames,variable,**kwargs)
+        variable_cube=loadwrfcube_mult(sorted(filenames),variable,**kwargs)
     elif type(filenames) is str:
         variable_cube=loadwrfcube_mult([filenames],variable,**kwargs)
     else:
