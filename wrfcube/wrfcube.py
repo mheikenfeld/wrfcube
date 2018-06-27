@@ -107,6 +107,8 @@ def loadwrfcube_mult(filenames,variable,constraint=None,add_coordinates=None):
     from iris.util import promote_aux_coord_to_dim_coord
     from iris.coords import AuxCoord
     from xarray import open_mfdataset
+    from datetime import datetime
+    from cf_units import Unit
     dataset=open_mfdataset(filenames,coords='all')
     array=dataset[variable]
     variable_dimensions=array.dims
@@ -166,6 +168,10 @@ def loadwrfcube_mult(filenames,variable,constraint=None,add_coordinates=None):
     if 'XTIME' in [coord.name() for coord in cube.coords()]:
         cube.coord('XTIME').rename('time')
         promote_aux_coord_to_dim_coord(cube,'time')
+        cube.coord('time').attributes={}
+
+
+        
     if 'XLAT' in [coord.name() for coord in cube.coords()]:
         latitude_coord=cube[0].coord('XLAT')
         latitude_coord.rename('latitude')
@@ -184,7 +190,13 @@ def loadwrfcube_mult(filenames,variable,constraint=None,add_coordinates=None):
         data_dims=tuple(xlong_dims)
         cube.add_aux_coord(longitude_coord,data_dims=data_dims)
         cube.remove_coord('XLONG')
-        
+    
+    # bring time axis into range that can be understood by pandas (e.g. idealised simulation starting in year 0) 
+    # reference set to 2000-01-01_00:00:00 instead
+    date_0=cube.coord('time').units.num2date(cube.coord('time').points[0])
+    if (date_0 < datetime(1678,1,1) or date_0> datetime(2262,12,31)):
+        cube.coord('time').units=Unit(cube.coord('time').units.name.split(' since ')[0]+' since 2000-01-01')
+   
     cube=cube.extract(constraint)
     
     if add_coordinates != None:
