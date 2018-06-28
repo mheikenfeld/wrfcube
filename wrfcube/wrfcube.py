@@ -61,13 +61,13 @@ def loadwrfcube(filenames,variable,**kwargs):
     #     add_aux_coordinates_multidim(filenames,variable_cube,**kwargs) 
     return variable_cube
     
-def loadwrfcube_single(filenames,variable,constraint=None,add_coordinates=None):
-    from iris import load_cube 
-    variable_cube=load_cube(filenames,variable)
-#    variable_cube=addcoordinates(filenames, variable,variable_cube,add_coordinates=add_coordinates)
-    variable_cube=add_time_coordinate(filenames, variable,variable_cube)
-#    variable_cube=variable_cube.extract(constraint)
-    return variable_cube
+#def loadwrfcube_single(filenames,variable,constraint=None,add_coordinates=None):
+#    from iris import load_cube 
+#    variable_cube=load_cube(filenames,variable)
+##    variable_cube=addcoordinates(filenames, variable,variable_cube,add_coordinates=add_coordinates)
+#    variable_cube=add_time_coordinate(filenames, variable,variable_cube)
+##    variable_cube=variable_cube.extract(constraint)
+#    return variable_cube
         
     
 #def loadwrfcube_mult(filenames,variable,constraint=None,add_coordinates=None):
@@ -106,6 +106,7 @@ def loadwrfcube_single(filenames,variable,constraint=None,add_coordinates=None):
 def loadwrfcube_mult(filenames,variable,constraint=None,add_coordinates=None):
     from iris.util import promote_aux_coord_to_dim_coord
     from iris.coords import AuxCoord
+    from iris import Constraint
     from xarray import open_mfdataset
     from datetime import datetime
     from cf_units import Unit
@@ -171,13 +172,13 @@ def loadwrfcube_mult(filenames,variable,constraint=None,add_coordinates=None):
         cube.coord('time').attributes={}
 
 
-        
+    # change latitude and longitude coordinates to  2D fields (fine andm ore consistent with other models for all static WRF Simulations)    
     if 'XLAT' in [coord.name() for coord in cube.coords()]:
-        latitude_coord=cube[0].coord('XLAT')
+        latitude_coord=cube.extract(Constraint(time=cube.coord('time').units.num2date(cube.coord('time').points[0]))).coord('XLAT')
         latitude_coord.rename('latitude')
         xlat_dims=list(cube.coord_dims('XLAT'))
         time_dim=cube.coord_dims('time')[0]
-        list_latitude=xlat_dims.pop(0)        
+        xlat_dims.remove(time_dim)        
         data_dims=tuple(xlat_dims)
         cube.add_aux_coord(latitude_coord,data_dims=data_dims)
         cube.remove_coord('XLAT')
@@ -186,7 +187,7 @@ def loadwrfcube_mult(filenames,variable,constraint=None,add_coordinates=None):
         longitude_coord.rename('longitude')
         xlong_dims=list(cube.coord_dims('XLONG'))
         time_dim=cube.coord_dims('time')[0]
-        list_longitude=xlong_dims.pop(0)        
+        xlong_dims.remove(time_dim)        
         data_dims=tuple(xlong_dims)
         cube.add_aux_coord(longitude_coord,data_dims=data_dims)
         cube.remove_coord('XLONG')
@@ -200,8 +201,7 @@ def loadwrfcube_mult(filenames,variable,constraint=None,add_coordinates=None):
     cube=cube.extract(constraint)
     
     if add_coordinates != None:
-        variable_cube=add_aux_coordinates_multidim(filenames,cube,constraint=None,add_coordinates=add_coordinates) 
-
+        cube=add_aux_coordinates_multidim(filenames,cube,constraint=None,add_coordinates=add_coordinates) 
     return cube
 
 
@@ -696,7 +696,6 @@ def array_interp_reduceby1(array,dim):
 
 
 def cube_interp_extendby1(cube_in,coord):
-    import numpy as np
     import dask.array as da
 
     dim=cube_in.coord_dims(coord)[0]
@@ -792,129 +791,129 @@ def replacecoordinates(variable_cube,replace_cube):
     return variable_cube_out
 
     
-def addcoordinates(filenames, variable,variable_cube,**kwargs):
-#    if 'add_coordinates' in kwargs:
-#        add_coordinates=kwargs['add_coordinates']
-#    else:
-#        add_coordinates=None
+#def addcoordinates(filenames, variable,variable_cube,**kwargs):
+##    if 'add_coordinates' in kwargs:
+##        add_coordinates=kwargs['add_coordinates']
+##    else:
+##        add_coordinates=None
+##        
+##    if add_coordinates==None:
+##        variable_cube=add_dim_coordinates(filenames, variable,variable_cube,**kwargs)
+##    else:
+##        variable_cube=add_dim_coordinates(filenames, variable,variable_cube,**kwargs)
+##        variable_cube=add_aux_coordinates_1dim(filenames, variable,variable_cube,**kwargs)
+#    variable_cube=add_dim_coordinates(filenames, variable,variable_cube,**kwargs)
+#    variable_cube=add_aux_coordinates_1dim(filenames, variable,variable_cube)
+#    variable_cube=add_aux_coordinates_1dim(filenames, variable,variable_cube)
+#    return variable_cube
+#
+#def add_time_coordinate(filenames, variable,variable_cube):
+#    time=make_time_coord(filenames)
+#    variable_cube.add_dim_coord(time,variable_cube.coord_dims('XTIME')[0])
+#    return variable_cube
+
+
+#def add_dim_coordinates(filenames, variable,variable_cube,add_coordinates=None):
+#    from netCDF4 import Dataset  # http://code.google.com/p/netcdf4-python/
+#    from iris import load_cube
+#    variable_cube_dim= load_cube(filenames, variable)
+#
+#    attributes=variable_cube_dim.attributes
+#    nc_id=Dataset(filenames)
+#    nc_variable=nc_id.variables[variable]
+#    variable_dimensions=nc_variable.dimensions
+#    [str(line) for line in variable_dimensions]
+#    DX=attributes['DX']        
+#    DY=attributes['DY']
+#    WEST_EAST_PATCH_END_UNSTAG=attributes['WEST-EAST_PATCH_END_UNSTAG']
+#    SOUTH_NORTH_PATCH_END_UNSTAG=attributes['SOUTH-NORTH_PATCH_END_UNSTAG']
+#    BOTTOM_TOP_PATCH_END_UNSTAG=attributes['BOTTOM-TOP_PATCH_END_UNSTAG']
+#    WEST_EAST_PATCH_END_STAG=attributes['WEST-EAST_PATCH_END_STAG']
+#    SOUTH_NORTH_PATCH_END_STAG=attributes['SOUTH-NORTH_PATCH_END_STAG']
+#    BOTTOM_TOP_PATCH_END_STAG=attributes['BOTTOM-TOP_PATCH_END_STAG']
+#    for dim in range(len(variable_dimensions)):
+##        if (variable_dimensions[dim]=='Time'):
+##           time=make_time_coord(filenames)
+##           variable_cube.add_dim_coord(time,dim)
+#        if (variable_dimensions[dim]=='west_east'):
+#            west_east=make_westeast_coord(DX,WEST_EAST_PATCH_END_UNSTAG)
+#            variable_cube.add_dim_coord(west_east,dim)
+#        elif (variable_dimensions[dim]=='south_north'):
+#           south_north=make_southnorth_coord(DY, SOUTH_NORTH_PATCH_END_UNSTAG)
+#           variable_cube.add_dim_coord(south_north,dim)
+#        elif (variable_dimensions[dim]=='bottom_top'):
+#           bottom_top=make_bottom_top_coordinate(BOTTOM_TOP_PATCH_END_UNSTAG)   
+#           variable_cube.add_dim_coord(bottom_top,dim)
+#           model_level_number=make_model_level_number_coordinate(BOTTOM_TOP_PATCH_END_UNSTAG)
+#           variable_cube.add_aux_coord(model_level_number,dim)
+#        elif variable_dimensions[dim]=='west_east_stag':
+#           west_east_stag=make_westeast_stag_coord(DX,WEST_EAST_PATCH_END_STAG)
+#           variable_cube.add_dim_coord(west_east_stag,dim)
+#        elif variable_dimensions[dim]=='south_north_stag':
+#           south_north_stag=make_southnorth_stag_coord(DY, SOUTH_NORTH_PATCH_END_STAG)
+#           variable_cube.add_dim_coord(south_north_stag,dim)
+#        elif variable_dimensions[dim]=='bottom_top_stag':
+#           bottom_top_stag=make_bottom_top_stag_coordinate(BOTTOM_TOP_PATCH_END_STAG)   
+#           variable_cube.add_dim_coord(bottom_top_stag,dim)
+#           model_level_number=make_model_level_number_coordinate(BOTTOM_TOP_PATCH_END_STAG)
+#           variable_cube.add_aux_coord(model_level_number,dim)
+#
+#    return variable_cube        
+    
+#def add_aux_coordinates_1dim(filenames, variable,variable_cube):#,add_coordinates=None):
+#    from netCDF4 import Dataset  # http://code.google.com/p/netcdf4-python/
+#    from iris import load_cube
+#    from iris.coords import AuxCoord
+#    variable_cube_dim= load_cube(filenames, variable)
+#    attributes=variable_cube_dim.attributes
+#    nc_id=Dataset(filenames)
+#    
+#    nc_variable=nc_id.variables[variable]
+#    variable_dimensions=nc_variable.dimensions
+#    [str(line) for line in variable_dimensions]
+#    DX=attributes['DX']        
+#    DY=attributes['DY']
+#    WEST_EAST_PATCH_END_UNSTAG=attributes['WEST-EAST_PATCH_END_UNSTAG']
+#    SOUTH_NORTH_PATCH_END_UNSTAG=attributes['SOUTH-NORTH_PATCH_END_UNSTAG']
+#    #BOTTOM_TOP_PATCH_END_UNSTAG=attributes['BOTTOM-TOP_PATCH_END_UNSTAG']
+#    WEST_EAST_PATCH_END_STAG=attributes['WEST-EAST_PATCH_END_STAG']
+#    SOUTH_NORTH_PATCH_END_STAG=attributes['SOUTH-NORTH_PATCH_END_STAG']
+#    #BOTTOM_TOP_PATCH_END_STAG=attributes['BOTTOM-TOP_PATCH_END_STAG']
+#    coord_system=make_coord_system(attributes)
+#    coords=variable_cube.coords()
+##    if type(add_coordinates)!=list:
+##        add_coordinates1=add_coordinates
+##        add_coordinates=[]
+##        add_coordinates.append(add_coordinates1)
+##    for coordinate in add_coordinates:
+##        if coordinate=='xy':
+#    for dim in range(len(coords)):            
+#        if (coords[dim].name()=='west_east'):
+#            projection_x_coord=make_x_coord(DX,WEST_EAST_PATCH_END_UNSTAG,coord_system=coord_system)
+#            variable_cube.add_aux_coord(projection_x_coord,dim)
+#            x_coord=AuxCoord(variable_cube.coord('west_east').points,long_name='x',units=1)
+#            variable_cube.add_aux_coord(x_coord,data_dims=variable_cube.coord_dims('west_east'))
+#
+#        elif (coords[dim].name()=='south_north'):
+#            projection_y_coord=make_y_coord(DY, SOUTH_NORTH_PATCH_END_UNSTAG,coord_system=coord_system)
+#            variable_cube.add_aux_coord(projection_y_coord,dim)    
+#            y_coord=AuxCoord(variable_cube.coord('south_north').points,long_name='y',units=1)
+#            variable_cube.add_aux_coord(y_coord,data_dims=variable_cube.coord_dims('south_north'))
+#
+#        elif (coords[dim].name()=='west_east_stag'):
+#            projection_x_stag_coord=make_x_stag_coord(DX,WEST_EAST_PATCH_END_STAG,coord_system=coord_system)
+#            variable_cube.add_aux_coord(projection_x_stag_coord,dim)
+#            x_coord=AuxCoord(variable_cube.coord('west_east_stag').points,long_name='x',units=1)
+#            variable_cube.add_aux_coord(x_coord,data_dims=variable_cube.coord_dims('west_east_stag'))
+#
+#        elif coords[dim].name()=='south_north_stag':
+#            projection_y_stag_coord=make_y_stag_coord(DY, SOUTH_NORTH_PATCH_END_STAG,coord_system=coord_system)
+#            variable_cube.add_aux_coord(projection_y_stag_coord,dim)                    
+#            y_coord=AuxCoord(variable_cube.coord('south_north_stag').points,long_name='y',units=1)
+#            variable_cube.add_aux_coord(y_coord,data_dims=variable_cube.coord_dims('south_north_stag'))        
+#
+#    return variable_cube               
 #        
-#    if add_coordinates==None:
-#        variable_cube=add_dim_coordinates(filenames, variable,variable_cube,**kwargs)
-#    else:
-#        variable_cube=add_dim_coordinates(filenames, variable,variable_cube,**kwargs)
-#        variable_cube=add_aux_coordinates_1dim(filenames, variable,variable_cube,**kwargs)
-    variable_cube=add_dim_coordinates(filenames, variable,variable_cube,**kwargs)
-    variable_cube=add_aux_coordinates_1dim(filenames, variable,variable_cube)
-
-    return variable_cube
-
-def add_time_coordinate(filenames, variable,variable_cube):
-    time=make_time_coord(filenames)
-    variable_cube.add_dim_coord(time,variable_cube.coord_dims('XTIME')[0])
-    return variable_cube
-
-
-def add_dim_coordinates(filenames, variable,variable_cube,add_coordinates=None):
-    from netCDF4 import Dataset  # http://code.google.com/p/netcdf4-python/
-    from iris import load_cube
-    variable_cube_dim= load_cube(filenames, variable)
-
-    attributes=variable_cube_dim.attributes
-    nc_id=Dataset(filenames)
-    nc_variable=nc_id.variables[variable]
-    variable_dimensions=nc_variable.dimensions
-    [str(line) for line in variable_dimensions]
-    DX=attributes['DX']        
-    DY=attributes['DY']
-    WEST_EAST_PATCH_END_UNSTAG=attributes['WEST-EAST_PATCH_END_UNSTAG']
-    SOUTH_NORTH_PATCH_END_UNSTAG=attributes['SOUTH-NORTH_PATCH_END_UNSTAG']
-    BOTTOM_TOP_PATCH_END_UNSTAG=attributes['BOTTOM-TOP_PATCH_END_UNSTAG']
-    WEST_EAST_PATCH_END_STAG=attributes['WEST-EAST_PATCH_END_STAG']
-    SOUTH_NORTH_PATCH_END_STAG=attributes['SOUTH-NORTH_PATCH_END_STAG']
-    BOTTOM_TOP_PATCH_END_STAG=attributes['BOTTOM-TOP_PATCH_END_STAG']
-    for dim in range(len(variable_dimensions)):
-#        if (variable_dimensions[dim]=='Time'):
-#           time=make_time_coord(filenames)
-#           variable_cube.add_dim_coord(time,dim)
-        if (variable_dimensions[dim]=='west_east'):
-            west_east=make_westeast_coord(DX,WEST_EAST_PATCH_END_UNSTAG)
-            variable_cube.add_dim_coord(west_east,dim)
-        elif (variable_dimensions[dim]=='south_north'):
-           south_north=make_southnorth_coord(DY, SOUTH_NORTH_PATCH_END_UNSTAG)
-           variable_cube.add_dim_coord(south_north,dim)
-        elif (variable_dimensions[dim]=='bottom_top'):
-           bottom_top=make_bottom_top_coordinate(BOTTOM_TOP_PATCH_END_UNSTAG)   
-           variable_cube.add_dim_coord(bottom_top,dim)
-           model_level_number=make_model_level_number_coordinate(BOTTOM_TOP_PATCH_END_UNSTAG)
-           variable_cube.add_aux_coord(model_level_number,dim)
-        elif variable_dimensions[dim]=='west_east_stag':
-           west_east_stag=make_westeast_stag_coord(DX,WEST_EAST_PATCH_END_STAG)
-           variable_cube.add_dim_coord(west_east_stag,dim)
-        elif variable_dimensions[dim]=='south_north_stag':
-           south_north_stag=make_southnorth_stag_coord(DY, SOUTH_NORTH_PATCH_END_STAG)
-           variable_cube.add_dim_coord(south_north_stag,dim)
-        elif variable_dimensions[dim]=='bottom_top_stag':
-           bottom_top_stag=make_bottom_top_stag_coordinate(BOTTOM_TOP_PATCH_END_STAG)   
-           variable_cube.add_dim_coord(bottom_top_stag,dim)
-           model_level_number=make_model_level_number_coordinate(BOTTOM_TOP_PATCH_END_STAG)
-           variable_cube.add_aux_coord(model_level_number,dim)
-
-    return variable_cube        
-    
-def add_aux_coordinates_1dim(filenames, variable,variable_cube):#,add_coordinates=None):
-    from netCDF4 import Dataset  # http://code.google.com/p/netcdf4-python/
-    from iris import load_cube
-    from iris.coords import AuxCoord
-    variable_cube_dim= load_cube(filenames, variable)
-    attributes=variable_cube_dim.attributes
-    nc_id=Dataset(filenames)
-    
-    nc_variable=nc_id.variables[variable]
-    variable_dimensions=nc_variable.dimensions
-    [str(line) for line in variable_dimensions]
-    DX=attributes['DX']        
-    DY=attributes['DY']
-    WEST_EAST_PATCH_END_UNSTAG=attributes['WEST-EAST_PATCH_END_UNSTAG']
-    SOUTH_NORTH_PATCH_END_UNSTAG=attributes['SOUTH-NORTH_PATCH_END_UNSTAG']
-    #BOTTOM_TOP_PATCH_END_UNSTAG=attributes['BOTTOM-TOP_PATCH_END_UNSTAG']
-    WEST_EAST_PATCH_END_STAG=attributes['WEST-EAST_PATCH_END_STAG']
-    SOUTH_NORTH_PATCH_END_STAG=attributes['SOUTH-NORTH_PATCH_END_STAG']
-    #BOTTOM_TOP_PATCH_END_STAG=attributes['BOTTOM-TOP_PATCH_END_STAG']
-    coord_system=make_coord_system(attributes)
-    coords=variable_cube.coords()
-#    if type(add_coordinates)!=list:
-#        add_coordinates1=add_coordinates
-#        add_coordinates=[]
-#        add_coordinates.append(add_coordinates1)
-#    for coordinate in add_coordinates:
-#        if coordinate=='xy':
-    for dim in range(len(coords)):            
-        if (coords[dim].name()=='west_east'):
-            projection_x_coord=make_x_coord(DX,WEST_EAST_PATCH_END_UNSTAG,coord_system=coord_system)
-            variable_cube.add_aux_coord(projection_x_coord,dim)
-            x_coord=AuxCoord(variable_cube.coord('west_east').points,long_name='x',units=1)
-            variable_cube.add_aux_coord(x_coord,data_dims=variable_cube.coord_dims('west_east'))
-
-        elif (coords[dim].name()=='south_north'):
-            projection_y_coord=make_y_coord(DY, SOUTH_NORTH_PATCH_END_UNSTAG,coord_system=coord_system)
-            variable_cube.add_aux_coord(projection_y_coord,dim)    
-            y_coord=AuxCoord(variable_cube.coord('south_north').points,long_name='y',units=1)
-            variable_cube.add_aux_coord(y_coord,data_dims=variable_cube.coord_dims('south_north'))
-
-        elif (coords[dim].name()=='west_east_stag'):
-            projection_x_stag_coord=make_x_stag_coord(DX,WEST_EAST_PATCH_END_STAG,coord_system=coord_system)
-            variable_cube.add_aux_coord(projection_x_stag_coord,dim)
-            x_coord=AuxCoord(variable_cube.coord('west_east_stag').points,long_name='x',units=1)
-            variable_cube.add_aux_coord(x_coord,data_dims=variable_cube.coord_dims('west_east_stag'))
-
-        elif coords[dim].name()=='south_north_stag':
-            projection_y_stag_coord=make_y_stag_coord(DY, SOUTH_NORTH_PATCH_END_STAG,coord_system=coord_system)
-            variable_cube.add_aux_coord(projection_y_stag_coord,dim)                    
-            y_coord=AuxCoord(variable_cube.coord('south_north_stag').points,long_name='y',units=1)
-            variable_cube.add_aux_coord(y_coord,data_dims=variable_cube.coord_dims('south_north_stag'))        
-
-    return variable_cube               
-        
     
     
     
@@ -1007,38 +1006,6 @@ def add_aux_coordinates_multidim(filenames,variable_cube,add_coordinates=None, c
             else:
                 raise SystemExit("no z and p coordinates added")
                 
-#        if coordinate=='latlon':    
-#            if (coords[0].name()=='time' and (coords[1].name()=='bottom_top' or 'bottom_top_stag') and coords[2].name()=='south_north' and coords[3].name()=='west_east'):
-#                lat_coord=make_lat_coordinate(filenames,**kwargs)
-#                lon_coord=make_lon_coordinate(filenames,**kwargs)   
-#                variable_cube.add_aux_coord(lat_coord,(0,2,3))
-#                variable_cube.add_aux_coord(lon_coord,(0,2,3))            
-#            elif (coords[0].name()=='time' and (coords[1].name()=='bottom_top' or 'bottom_top_stag') and coords[2].name()=='south_north' and coords[3].name()=='west_east_stag'):
-#                lat_coord=make_lat_xstag_coordinate(filenames,**kwargs)
-#                lon_coord=make_lon_xstag_coordinate(filenames,**kwargs)   
-#                variable_cube.add_aux_coord(lat_coord,(0,2,3))
-#                variable_cube.add_aux_coord(lon_coord,(0,2,3))
-#            elif (coords[0].name()=='time' and (coords[1].name()=='bottom_top' or 'bottom_top_stag') and coords[2].name()=='south_north_stag' and coords[3].name()=='west_east'):
-#                lat_coord=make_lat_ystag_coordinate(filenames,**kwargs)
-#                lon_coord=make_lon_ystag_coordinate(filenames,**kwargs)   
-#                variable_cube.add_aux_coord(lat_coord,(0,2,3))
-#                variable_cube.add_aux_coord(lon_coord,(0,2,3))
-#            elif (coords[0].name()=='time'  and coords[1].name()=='south_north' and coords[2].name()=='west_east'):
-#                lat_coord=make_lat_coordinate(filenames,**kwargs)
-#                lon_coord=make_lon_coordinate(filenames,**kwargs)   
-#                variable_cube.add_aux_coord(lat_coord,(0,1,2))
-#                variable_cube.add_aux_coord(lon_coord,(0,1,2))            
-#            elif (coords[0].name()=='time'  and coords[1].name()=='south_north' and coords[2].name()=='west_east_stag'):
-#                lat_coord=make_lat_xstag_coordinate(filenames,**kwargs)
-#                lon_coord=make_lon_xstag_coordinate(filenames,**kwargs)   
-#                variable_cube.add_aux_coord(lat_coord,(0,1,2))
-#                variable_cube.add_aux_coord(lon_coord,(0,1,2))
-#            elif (coords[0].name()=='time' and coords[1].name()=='south_north_stag' and coords[2].name()=='west_east'):
-#                lat_coord=make_lat_ystag_coordinate(filenames,**kwargs)
-#                lon_coord=make_lon_ystag_coordinate(filenames,**kwargs)   
-#                variable_cube.add_aux_coord(lat_coord,(0,1,2))
-#                variable_cube.add_aux_coord(lon_coord,(0,1,2))
-#            else:
                 raise SystemExit("no lat/lon coordinates added")
     return variable_cube
 
@@ -1249,41 +1216,6 @@ def make_p_stag_coordinate(filenames,**kwargs):
     p_coord=coords.AuxCoord(p.core_data(), standard_name=None, long_name='pressure', var_name='pressure', units='Pa', bounds=None, attributes=None, coord_system=None)
     return p_coord
     
-def make_lon_coordinate(filenames,**kwargs):
-    from iris import coords
-    lon= loadwrfcube(filenames, 'XLONG',**kwargs)
-    lon_coord=coords.AuxCoord(lon.core_data(), standard_name=None, long_name='longitude', var_name='longitude', units='degrees', bounds=None, attributes=None, coord_system=None)
-    return lon_coord
-    
-def make_lat_coordinate(filenames,**kwargs):
-    from iris import coords
-    lat= loadwrfcube(filenames, 'XLAT',**kwargs)
-    lat_coord=coords.AuxCoord(lat.core_data(), standard_name=None, long_name='latitude', var_name='latitude', units='degrees', bounds=None, attributes=None, coord_system=None)
-    return lat_coord
-    
-def make_lon_xstag_coordinate(filenames,**kwargs):
-    from iris import coords
-    lon= loadwrfcube(filenames, 'XLONG_U',**kwargs)
-    lon_coord=coords.AuxCoord(lon.core_data(), standard_name=None, long_name='longitude', var_name='longitude', units='degrees', bounds=None, attributes=None, coord_system=None)
-    return lon_coord
-    
-def make_lat_xstag_coordinate(filenames,**kwargs):
-    from iris import coords
-    lat= loadwrfcube(filenames, 'XLAT_U',**kwargs)
-    lat_coord=coords.AuxCoord(lat.core_data(), standard_name=None, long_name='latitude', var_name='latitude', units='degrees', bounds=None, attributes=None, coord_system=None)
-    return lat_coord
-
-def make_lon_ystag_coordinate(filenames,**kwargs):
-    from iris import coords
-    lon= loadwrfcube(filenames, 'XLONG_V',**kwargs)
-    lon_coord=coords.AuxCoord(lon.core_data(), standard_name=None, long_name='longitude', var_name='longitude', units='degrees', bounds=None, attributes=None, coord_system=None)
-    return lon_coord
-    
-def make_lat_ystag_coordinate(filenames,**kwargs):
-    from iris import coords
-    lat= loadwrfcube(filenames, 'XLAT_V',**kwargs)
-    lat_coord=coords.AuxCoord(lat.core_data(), standard_name=None, long_name='latitude', var_name='latidude', units='degrees', bounds=None, attributes=None, coord_system=None)
-    return  lat_coord
 
 def collapse_removecoord(cube,coord,aggregator):
     for coordinate in  cube.coords():
