@@ -15,10 +15,6 @@ def load(filenames,variable,mode='auto',**kwargs):
             variable_load=variable_dict_pseudonym[variable]
             variable_cube=loadwrfcube(filenames,variable_load,**kwargs)
         else:
-            print('variable: ',variable)
-            print('filenames[0]: ',filenames[0])
-            print('variable_list_file: ',variable_list_file)
-
             raise SystemExit('variable' + variable+ ' not found')
 
     elif mode=='file':
