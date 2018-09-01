@@ -245,6 +245,7 @@ variable_list_derive=[
         'temperature',
         'air_temperature',
         'density',
+        'air_density',
         'LWC',
         'IWC',
         'LWP',
