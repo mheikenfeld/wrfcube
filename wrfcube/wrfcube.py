@@ -5,6 +5,15 @@ warnings.filterwarnings('ignore', category=RuntimeWarning, append=True)
 warnings.filterwarnings('ignore', category=FutureWarning, append=True)
 
 def load(filenames,variable,mode='auto',**kwargs):
+    from glob import glob
+    # if filenames is input as string, use glob to create list of files, check that list if files is not empty
+    if not (type(filenames) in[list,str]):
+        raise ValueError('filenames must be either a list or a string')
+    if type(filenames) is str:
+        filenames=glob(filenames)
+    if not filenames:
+        raise ValueError('Empty list of files to read')
+        
     if mode=='auto':
         variable_list_file=variable_list(filenames)
         if variable in variable_list_file:
