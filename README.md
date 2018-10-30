@@ -29,5 +29,6 @@ git clone https://github.com/mheikenfeld/wrfcube.git
 ```
 
 and install the package from the locally cloned version:
-
-pip install wrfcube/
+```
+pip install --upgrade wrfcube/
+```
