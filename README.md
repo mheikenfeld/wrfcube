@@ -32,3 +32,4 @@ and install the package from the locally cloned version:
 ```
 pip install --upgrade wrfcube/
 ```
+(the trailing "/" actually matters here..)
