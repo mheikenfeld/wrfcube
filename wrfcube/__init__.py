@@ -1,2 +1,2 @@
-from wrfcube.wrfcube import loadwrfcube, derivewrfcube, load
-from wrfcube.wrfcube import calculate_wrf_LWP_fromcubes,calculate_wrf_IWP_fromcubes,calculate_wrf_IWV_fromcubes,integrate_cube
+from .wrfcube import loadwrfcube, derivewrfcube, load
+from .wrfcube import calculate_wrf_LWP_fromcubes,calculate_wrf_IWP_fromcubes,calculate_wrf_IWV_fromcubes,integrate_cube
