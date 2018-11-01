@@ -381,7 +381,10 @@ def derivewrfcube(filenames,variable,**kwargs):
 def calculate_wrf_surface_precipitation(filenames,constraint=None,add_coordinates=None):
     import numpy as np
     RAINNC= loadwrfcube(filenames, 'RAINNC',add_coordinates=add_coordinates)
-    dt=(RAINNC.coords('time')[0].points[1]-RAINNC.coords('time')[0].points[0])*24
+    #caclulate timestep in hours
+    time_coord=RAINNC.coord('time')
+    dt=(time_coord.units.num2date(time_coord.points[1])-time_coord.units.num2date(time_coord.points[0])).total_seconds()/24./3600.
+    #divide difference in precip between timesteps (in mm/h) by timestep (in h):
     rainnc_inst=np.concatenate((RAINNC.core_data()[[1],:,:]-RAINNC.core_data()[[0],:,:],RAINNC.core_data()[1:,:,:]-RAINNC.core_data()[0:-1:,:,:]),axis=0)/dt
     RAINNC_inst=RAINNC
     RAINNC_inst.data=rainnc_inst
