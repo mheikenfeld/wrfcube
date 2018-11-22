@@ -24,7 +24,7 @@ def load(filenames,variable,mode='auto',**kwargs):
             variable_load=variable_dict_pseudonym[variable]
             variable_cube=loadwrfcube(filenames,variable_load,**kwargs)
         else:
-            raise SystemExit('variable' + variable+ ' not found')
+            raise SystemExit(f'variable {variable} not found')
 
     elif mode=='file':
         variable_list_file=variable_list(filenames)
@@ -273,6 +273,9 @@ variable_list_derive=[
         'v_unstaggered',
         'maximum_reflectivity' ,
         'surface_precipitation',
+        'surface_precipitation_average',
+        'surface_precipitation_accumulated',
+        'surface_precipitation_instantaneous'
         ]
 
 
@@ -369,8 +372,15 @@ def derivewrfcube(filenames,variable,**kwargs):
         variable_cube=replacecoordinates(variable_cube,replace_cube)
         variable_cube=variable_cube.extract(constraint)
 
-    elif variable == 'surface_precipitation':
-        variable_cube=calculate_wrf_surface_precipitation(filenames,**kwargs)
+    elif variable == 'surface_precipitation_average':
+        variable_cube=calculate_wrf_surface_precipitation_average(filenames,**kwargs)
+        
+    elif variable == 'surface_precipitation_accumulated':
+        variable_cube=calculate_wrf_surface_precipitation_accumulated(filenames,**kwargs)
+
+    elif (variable == 'surface_precipitation_instantaneous') or (variable == 'surface_precipitation'):
+        variable_cube=calculate_wrf_surface_precipitation_instantaneous(filenames,**kwargs)
+
         #variable_cube_out=addcoordinates(filenames, 'T',variable_cube,add_coordinates)
     elif variable == 'maximum_reflectivity':    
         variable_cube=calculate_wrf_maximum_reflectivity(filenames,**kwargs)
@@ -378,20 +388,38 @@ def derivewrfcube(filenames,variable,**kwargs):
         raise NameError(variable, 'is not a known variable') 
     return variable_cube
     
-def calculate_wrf_surface_precipitation(filenames,constraint=None,add_coordinates=None):
-    import numpy as np
-    RAINNC= loadwrfcube(filenames, 'RAINNC',add_coordinates=add_coordinates)
+def calculate_wrf_surface_precipitation_average(filenames,**kwargs):
+    from dask.array import concatenate
+    surface_precip_accum=calculate_wrf_surface_precipitation_accumulated(filenames,**kwargs)
     #caclulate timestep in hours
-    time_coord=RAINNC.coord('time')
+    time_coord=surface_precip_accum.coord('time')
     dt=(time_coord.units.num2date(time_coord.points[1])-time_coord.units.num2date(time_coord.points[0])).total_seconds()/3600.
     #divide difference in precip between timesteps (in mm/h) by timestep (in h):
-    rainnc_inst=np.concatenate((RAINNC.core_data()[[1],:,:]-RAINNC.core_data()[[0],:,:],RAINNC.core_data()[1:,:,:]-RAINNC.core_data()[0:-1:,:,:]),axis=0)/dt
-    RAINNC_inst=RAINNC
-    RAINNC_inst.data=rainnc_inst
-    RAINNC_inst.rename('surface_precipitation')
-    RAINNC_inst.units= 'mm/h'
-    RAINNC_inst=RAINNC_inst.extract(constraint)
-    return RAINNC_inst
+    surface_precip=surface_precip_accum
+    surface_precip.data=concatenate((0*surface_precip.core_data()[[0],:,:],surface_precip.core_data()[1:,:,:]-surface_precip.core_data()[:-1:,:,:]),axis=0)/dt
+    surface_precip.rename('surface_precipitation_average')
+    surface_precip.units= 'mm h-1'
+    return surface_precip
+
+def calculate_wrf_surface_precipitation_accumulated(filenames,**kwargs):
+    RAINNC= loadwrfcube(filenames, 'RAINNC',**kwargs)
+    SNOWNC= loadwrfcube(filenames, 'SNOWNC',**kwargs)
+    GRAUPELNC= loadwrfcube(filenames, 'GRAUPELNC',**kwargs)
+    surface_precip_accum=RAINNC+SNOWNC+GRAUPELNC
+    surface_precip_accum.rename('surface_precipitation_accumulated')
+    return surface_precip_accum
+
+def calculate_wrf_surface_precipitation_instantaneous(filenames,**kwargs):
+    from xarray import open_mfdataset
+    dataset=open_mfdataset(filenames,coords='all')
+    dt=dataset.attrs['DT']
+    RAINNCV= loadwrfcube(filenames, 'RAINNCV',**kwargs)
+    SNOWNCV= loadwrfcube(filenames, 'SNOWNCV',**kwargs)
+    GRAUPELNCV= loadwrfcube(filenames, 'GRAUPELNCV',**kwargs)
+    surface_precip=(RAINNCV+SNOWNCV+GRAUPELNCV)/dt
+    surface_precip.units= 'kg m-2 s-1'
+    surface_precip.rename('surface_precipitation_instantaneous')
+    return surface_precip
 
 def variable_list(filenames):
     from netCDF4 import Dataset
