@@ -143,7 +143,7 @@ def loadwrfcube_mult(filenames,variable,constraint=None,add_coordinates=None):
         elif variable_dimensions[dim]=='west_east_stag':
            west_east_stag=make_westeast_stag_coord(attributes['DX'],attributes['WEST-EAST_PATCH_END_STAG'])
            cube.add_dim_coord(west_east_stag,dim)
-           projection_x_stag_coord=make_x_stag_coord(attributes['DX'],attributes['WEST_EAST_PATCH_END_STAG'],coord_system=coord_system)
+           projection_x_stag_coord=make_x_stag_coord(attributes['DX'],attributes['WEST-EAST_PATCH_END_STAG'],coord_system=coord_system)
            cube.add_aux_coord(projection_x_stag_coord,dim)
            x_coord=AuxCoord(cube.coord('west_east_stag').points,long_name='x',units=1)
            cube.add_aux_coord(x_coord,data_dims=cube.coord_dims('west_east_stag'))
@@ -1073,7 +1073,7 @@ def make_westeast_stag_coord(DX,WEST_EAST_PATCH_END_STAG):
 def make_southnorth_coord(DY,SOUTH_NORTH_PATCH_END_UNSTAG):
     from iris import coords
     from numpy import arange    #DY=attributes['DY']
-    #SOUTH_NORTH_PATCH_END_UNSTAG=attributes['SOUTH_NORTH_PATCH_END_UNSTAG']
+    #SOUTH_NORTH_PATCH_END_UNSTAG=attributes['SOUTH-NORTH_PATCH_END_UNSTAG']
     SOUTH_NORTH=arange(0,SOUTH_NORTH_PATCH_END_UNSTAG)
     south_north=coords.DimCoord(SOUTH_NORTH, standard_name=None, long_name='south_north', var_name='south_north', units='1', bounds=None, attributes=None, coord_system=None, circular=False)
     return south_north
