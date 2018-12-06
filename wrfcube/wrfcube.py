@@ -517,8 +517,6 @@ def calculate_wrf_volume(filenames,**kwargs):
                                         long_name='y_diff',units=layer_height.coord('projection_y_coordinate').units),
                                         data_dims=layer_height.coord_dims('projection_y_coordinate'))
     volume=layer_height*layer_height.coord('x_diff')*layer_height.coord('y_diff')
-    
-    
     volume.remove_coord('x_diff')
     volume.remove_coord('y_diff')
     volume.rename('cell_volume')
@@ -538,7 +536,6 @@ def calculate_wrf_area(filenames,**kwargs):
     area.rename('cell_area')
     return area
 
-    
 def calculate_wrf_layerheight(filenames,**kwargs):
     from iris import Constraint
     zH=derivewrfcube(filenames,'geopotential_height_stag',**kwargs)
@@ -548,7 +545,7 @@ def calculate_wrf_layerheight(filenames,**kwargs):
     replace_cube=loadwrfcube(filenames,'T',**kwargs)
     layer_height=replacecoordinates(layer_height,replace_cube)
     return layer_height
-    
+
 def calculate_wrf_LWP(filenames,**kwargs):
     from iris.analysis import SUM
     LWC=derivewrfcube(filenames,'LWC',**kwargs)
@@ -558,7 +555,7 @@ def calculate_wrf_LWP(filenames,**kwargs):
     LWP.rename('liquid water path')
     #LWP.rename('atmosphere_mass_content_of_cloud_liquid_water')
     return LWP   
-#    
+
 def calculate_wrf_IWP(filenames,**kwargs):    
     from iris.analysis import SUM
     IWC=derivewrfcube(filenames,'IWC',**kwargs)
@@ -568,7 +565,7 @@ def calculate_wrf_IWP(filenames,**kwargs):
     IWP.rename('ice water path')
     #IWP.rename('atmosphere_mass_content_of_cloud_ice_water')
     return IWP
-    
+
 def calculate_wrf_IWV(filenames,**kwargs):    
     from iris.analysis import SUM
     QVAPOR=loadwrfcube(filenames,'QVAPOR',**kwargs)
@@ -588,7 +585,7 @@ def integrate_cube(variable,Airmass_or_dz,name=None):
     variable_integrated=variable_integrated.collapsed(('model_level_number'),SUM)
     variable_integrated.rename(name)
     return variable_integrated
-    
+
 def calculate_wrf_LWP_fromcubes(LWC,Airmass):
     from iris.analysis import SUM
     LW=(LWC*Airmass)
@@ -598,8 +595,7 @@ def calculate_wrf_LWP_fromcubes(LWC,Airmass):
     LWP.rename('liquid water path')
     #LWP.rename('atmosphere_mass_content_of_cloud_liquid_water')
     return LWP
-    
-#    
+
 def calculate_wrf_IWP_fromcubes(IWC, Airmass):
     from iris.analysis import SUM
     IW=(IWC*Airmass)
@@ -619,8 +615,6 @@ def calculate_wrf_IWV_fromcubes(QVAPOR,Airmass):
     IWV.rename('integrated water vapor')
     return IWV
 
-
-    
 def calculate_wrf_maximum_reflectivity(filenames,**kwargs):
     from iris.analysis import MAX
     REFL_10CM=loadwrfcube(filenames,'REFL_10CM',**kwargs)
@@ -652,10 +646,8 @@ def calculate_wrf_v_unstaggered(filenames,**kwargs):
     v_unstaggered = cube.Cube(0.5*(v.extract(constraint_1).core_data()+v.extract(constraint_2).core_data()),standard_name='y_wind', units='m/s')
     return v_unstaggered
 
-
 def calculate_wrf_density(filenames,**kwargs):
     from iris import coords
-
     if ('ALT' in variable_list(filenames)):
         alt=loadwrfcube(filenames,'ALT',**kwargs)
         rho=alt**(-1)
@@ -666,14 +658,13 @@ def calculate_wrf_density(filenames,**kwargs):
        rho=p*((R*T)**-1)
        rho.rename('air_density')
     return rho
-#    
+
 def calculate_wrf_pressure(filenames,**kwargs):
     P= loadwrfcube(filenames, 'P',**kwargs)
     PB= loadwrfcube(filenames, 'PB',**kwargs)
     p=P + PB 
     p.rename('pressure')
     return p
-    
 
 def calculate_wrf_pressure_stag(filenames,**kwargs):
     from iris import Constraint
@@ -682,7 +673,6 @@ def calculate_wrf_pressure_stag(filenames,**kwargs):
     p_stag = 0.5*(p.extract(Constraint(bottom_top=bottom_top[:-1]))+p.extract(Constraint(bottom_top=bottom_top[1:])).core_data())    
     return p_stag
 
-    #    
 def calculate_wrf_pressure_xstag(filenames,**kwargs):
     from iris import Constraint
     p=derivewrfcube(filenames,'pressure',**kwargs)
@@ -691,7 +681,6 @@ def calculate_wrf_pressure_xstag(filenames,**kwargs):
     p_xstag.rename('pressure')
     return p
 
-#    
 def calculate_wrf_pressure_ystag(filenames,**kwargs):
     from iris import Constraint
     p=derivewrfcube(filenames,'pressure',**kwargs)
@@ -700,19 +689,43 @@ def calculate_wrf_pressure_ystag(filenames,**kwargs):
     p_ystag.rename('pressure')
     return p_ystag
 
-    
 def calculate_wrf_geopotential(filenames,**kwargs):
     PH= loadwrfcube(filenames, 'PH',**kwargs)
     PHB= loadwrfcube(filenames,'PHB',**kwargs)
     pH=PH + PHB
     pH.rename('geopotential')
     return pH
-    
+
+def calculate_wrf_geopotential_height_stag(filenames,**kwargs):
+    from iris import coords
+    pH=derivewrfcube(filenames,'geopotential',**kwargs)
+    g = coords.AuxCoord(9.81,long_name='acceleration', units='m s^-2')
+    zH=pH/g
+    zH.rename('geopotential_height')
+    return zH
+
+def calculate_wrf_geopotential_height(filenames,**kwargs):
+    from iris import Constraint
+    zH=derivewrfcube(filenames,'geopotential_height_stag',**kwargs)
+    bottom_top_stag=zH.coord('bottom_top_stag').points
+    z = 0.5*(zH.extract(Constraint(bottom_top_stag=bottom_top_stag[:-1]))+zH.extract(Constraint(bottom_top_stag=bottom_top_stag[1:])).core_data()) 
+    z.rename('geopotential_height')
+    return z
+
+def calculate_wrf_geopotential_height_ystag(filenames,**kwargs):
+    z=calculate_wrf_geopotential_height(filenames,**kwargs)
+    z_ystag = cube_interp_extendby1(z,'south_north')
+    return z_ystag
+
+def calculate_wrf_geopotential_height_xstag(filenames,**kwargs):
+    z=calculate_wrf_geopotential_height(filenames,**kwargs)
+    z_xstag = cube_interp_extendby1(z,'west_east')
+    return z_xstag
+
 def unstagger(cube_in,coord,filenames,**kwargs):
     cube_out=cube_interp_reduceby1(cube_in,coord)
     replace_cube=loadwrfcube(filenames,'T',**kwargs)
     cube_out=replacecoordinates(cube_out,replace_cube)
-
 
 def array_interp_extendby1(array,dim):
     import numpy as np
@@ -726,7 +739,7 @@ def array_interp_extendby1(array,dim):
     idx_end[dim]=slice(-2,-1)
     array_out=np.concatenate((array[idx_start],0.5*(array[idx1]+array[idx2]),array[idx_end]),axis=dim)
     return array_out
-    
+
 def array_interp_reduceby1(array,dim):
     idx = [slice(None)] * (array.ndim)  
     idx1=idx
@@ -737,10 +750,8 @@ def array_interp_reduceby1(array,dim):
     array_out=0.5*(array[idx1]+array[idx2])
     return array_out
 
-
 def cube_interp_extendby1(cube_in,coord):
     import dask.array as da
-
     dim=cube_in.coord_dims(coord)[0]
     cube_data=cube_in.core_data()
     ndim=cube_in.ndim
@@ -761,7 +772,7 @@ def cube_interp_extendby1(cube_in,coord):
 #    idx1[dim]=slice(1)
 #    array_out=np.concatenate((cube_data[idx1],cube_data),axis=dim)
     return array_out
-    
+
 def cube_interp_reduceby1(cube_in,coord):
     dim=cube_in.coord_dims(coord)
     ndim=cube_in.ndim
@@ -773,52 +784,11 @@ def cube_interp_reduceby1(cube_in,coord):
     cube_out=0.5*(cube_in[idx1]+cube_in[idx2].core_data())
     return cube_out
 
-
 def load_sum(filename,list_variables,**kwargs):
     cube_out=load(filename,list_variables[0],**kwargs)
     for variable in list_variables[1:]:
         cube_out=cube_out+load(filename,variable,**kwargs)
-
     return cube_out
-    
-
-
-def calculate_wrf_geopotential_height_stag(filenames,**kwargs):
-    from iris import coords
-    pH=derivewrfcube(filenames,'geopotential',**kwargs)
-    g = coords.AuxCoord(9.81,long_name='acceleration', units='m s^-2')
-    zH=pH/g
-    zH.rename('geopotential_height')
-    return zH
-
-def calculate_wrf_geopotential_height(filenames,**kwargs):
-    from iris import Constraint
-    zH=derivewrfcube(filenames,'geopotential_height_stag',**kwargs)
-    bottom_top_stag=zH.coord('bottom_top_stag').points
-    z = 0.5*(zH.extract(Constraint(bottom_top_stag=bottom_top_stag[:-1]))+zH.extract(Constraint(bottom_top_stag=bottom_top_stag[1:])).core_data()) 
-    z.rename('geopotential_height')
-    return z
-    
-def calculate_wrf_geopotential_height_ystag(filenames,**kwargs):
-    #from iris import Constraint
-    #z=derivewrfcube(filenames,'geopotential_height',**kwargs)
-    z=calculate_wrf_geopotential_height(filenames,**kwargs)
-    #south_north=z.coord('south_north').points
-    #z_ystag = 0.5*(z.extract(Constraint(south_north=south_north[:-1]))+z.extract(Constraint(south_north=south_north[1:])).core_data())
-    dim=z.coord_dims('south_north')[0]
-    z_ystag = cube_interp_extendby1(z,'south_north')
-    return z_ystag
-    
-def calculate_wrf_geopotential_height_xstag(filenames,**kwargs):
-    #from iris import Constraint
-   # z=derivewrfcube(filenames,'geopotential_height',**kwargs)
-    z=calculate_wrf_geopotential_height(filenames,**kwargs)
-
-    #west_east=z.coord('west_east').points
-    #z_xstag = 0.5*(z.extract(Constraint(west_east=west_east[:-1]))+z.extract(Constraint(west_east=west_east[1:])).core_data())
-    dim=z.coord_dims('west_east')[0]
-    z_xstag = cube_interp_extendby1(z,'west_east')
-    return z_xstag
 
 def remove_all_coordinates(variable_cube):
     for coordinate in variable_cube.coords():
@@ -833,7 +803,6 @@ def replacecoordinates(variable_cube,replace_cube):
     variable_cube_out.attributes={}
     return variable_cube_out
 
-    
 #def addcoordinates(filenames, variable,variable_cube,**kwargs):
 ##    if 'add_coordinates' in kwargs:
 ##        add_coordinates=kwargs['add_coordinates']
