@@ -15,14 +15,14 @@ def load(filenames,variable,mode='auto',**kwargs):
         raise ValueError('Empty list of files to read')
         
     if mode=='auto':
-        variable_list_file=variable_list(filenames)
-        if variable in variable_list_file:
-            variable_cube=loadwrfcube(filenames,variable,**kwargs)
-        elif variable in variable_list_derive:
-            variable_cube=derivewrfcube(filenames,variable,**kwargs)
+        variable_list_file=variable_list(filenames)        
+        if variable in variable_list_derive:
+            variable_cube=derivewrfcube(filenames,variable,**kwargs)        
         elif variable in variable_dict_pseudonym.keys():
             variable_load=variable_dict_pseudonym[variable]
             variable_cube=loadwrfcube(filenames,variable_load,**kwargs)
+        elif variable in variable_list_file:
+            variable_cube=loadwrfcube(filenames,variable,**kwargs)
         else:
             raise SystemExit(f'variable {variable} not found')
 
@@ -36,7 +36,6 @@ def load(filenames,variable,mode='auto',**kwargs):
         variable_load=variable_dict_pseudonym[variable]
         variable_cube=loadwrfcube(filenames,variable_load,**kwargs)
     else:
-       print("mode=",mode)
        raise SystemExit('unknown mode: '+mode)
 
     return variable_cube
@@ -54,7 +53,6 @@ def loadwrfcube(filenames,variable,**kwargs):
     elif type(filenames) is str:
         variable_cube=loadwrfcube_mult([filenames],variable,**kwargs)
     else:
-        print("filenames=",filenames)
         raise SystemExit('Type of input unknown: Must be str of list')
     
     
@@ -225,7 +223,7 @@ def derivewrfcubelist(filenames,variable_list,**kwargs):
 #    elif type(filenames) is str:
 #        variable_cube=derivewrfcube_single(filenames,variable,**kwargs)
 #    else:
-#        print('Type of input unknown: Must be str of list')
+#        raise ValueError('Type of input unknown: Must be str of list')
 #    return variable_cube
 #
 #def derivewrfcube_mult(filenames,variable,**kwargs):
@@ -275,7 +273,12 @@ variable_list_derive=[
         'surface_precipitation',
         'surface_precipitation_average',
         'surface_precipitation_accumulated',
-        'surface_precipitation_instantaneous'
+        'surface_precipitation_instantaneous',
+        'QNCLOUD',
+        'QNRAIN',
+        'QNGRAUPEL',
+        'QNICE',
+        'QNSNOW'
         ]
 
 
@@ -384,6 +387,9 @@ def derivewrfcube(filenames,variable,**kwargs):
         #variable_cube_out=addcoordinates(filenames, 'T',variable_cube,add_coordinates)
     elif variable == 'maximum_reflectivity':    
         variable_cube=calculate_wrf_maximum_reflectivity(filenames,**kwargs)
+    elif variable in ['QNCLOUD','QNRAIN','QNGRAUPEL','QNICE','QNSNOW']:
+        variable_cube=loadwrfcube(filenames,variable,**kwargs)
+        variable_cube.units='kg-1'
     else:
         raise NameError(variable, 'is not a known variable') 
     return variable_cube
