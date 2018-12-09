@@ -24,7 +24,7 @@ def load(filenames,variable,mode='auto',**kwargs):
         elif variable in variable_list_file:
             variable_cube=loadwrfcube(filenames,variable,**kwargs)
         else:
-            raise ValueError(f'variable {variable} not found')
+            raise ValueError('variable '+ variable + ' not found')
 
     elif mode=='file':
         variable_list_file=variable_list(filenames)
