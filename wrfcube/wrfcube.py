@@ -197,9 +197,9 @@ def loadwrfcube_mult(filenames,variable,constraint=None,add_coordinates=None):
     
     # bring time axis into range that can be understood by pandas (e.g. idealised simulation starting in year 0) 
     # reference set to 2000-01-01_00:00:00 instead
-    date_0=cube.coord('time').units.num2date(cube.coord('time').points[0])
-    if (date_0 < datetime(1678,1,1) or date_0> datetime(2262,12,31)):
-        cube.coord('time').units=Unit(cube.coord('time').units.name.split(' since ')[0]+' since 2000-01-01')
+    #date_0=cube.coord('time').units.num2date(cube.coord('time').points[0])
+    #if (date_0 < datetime(1678,1,1) or date_0> datetime(2262,12,31)):
+    #    cube.coord('time').units=Unit(cube.coord('time').units.name.split(' since ')[0]+' since 2000-01-01')
    
     cube=cube.extract(constraint)
     
@@ -1036,9 +1036,9 @@ def make_time_coord(filenames):
 #        filetimelist.append(time_dt.seconds)
         timeobjlist.append(timeobj)
 #    time_days=empty(len(timeobjlist))
-    if timeobjlist[0]==datetime(1,1,1,0,0,0):
-        for i,time in enumerate(timeobjlist):
-            timeobjlist[i]=timeobjlist[i].replace(year=2000)
+#    if timeobjlist[0]==datetime(1,1,1,0,0,0):
+#        for i,time in enumerate(timeobjlist):
+#            timeobjlist[i]=timeobjlist[i].replace(year=2000)
 #    #Include a different base_date for dates close to 0001-01-01 (idealised simulations)
 
     # if timeobjlist[0]<datetime(100,1,1):
