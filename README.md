@@ -1,5 +1,6 @@
 wrfcube
 ======
+[![DOI](https://zenodo.org/badge/63322176.svg)](https://zenodo.org/badge/latestdoi/63322176)  
 
 Documentation
 -------------
