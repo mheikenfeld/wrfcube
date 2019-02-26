@@ -1,8 +1,8 @@
 language: python
-sudo: false
+#sudo: false
 # choose python versions
 python:
- - "3.6"
+  - "3.6"
  
 env:
   - TEST_TARGET=unit PYTHON_TARGET=3.6
