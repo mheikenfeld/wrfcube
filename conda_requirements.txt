@@ -1,0 +1,15 @@
+# This file may be used to create an environment using:
+# $ conda create --name <env> --file <this file>
+
+# Python dependencies
+numpy
+scipy
+scikit-learn
+pandas
+pytables
+matplotlib 
+iris 
+xarray 
+cf_units
+cartopy
+
