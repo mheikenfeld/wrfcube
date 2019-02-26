@@ -1,3 +1,11 @@
-  language: python
-  script:
+
+language: python
+# choose python versions
+python:
+ - "3.6"
+# command to install dependencies
+install:
+  - pip install -r conda_requirements.txt
+# command to run tests
+script:
     - pytest
