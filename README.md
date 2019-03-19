@@ -1,6 +1,7 @@
 wrfcube
 ======
-[![DOI](https://zenodo.org/badge/63322176.svg)](https://zenodo.org/badge/latestdoi/63322176)  
+
+[![DOI](https://zenodo.org/badge/63322176.svg)](https://zenodo.org/badge/latestdoi/63322176)
 [![Documentation Status](https://readthedocs.org/projects/wrfcube/badge/?version=latest)](https://wrfcube.readthedocs.io/en/latest/?badge=latest)
 [![Build Status](https://travis-ci.org/mheikenfeld/wrfcube.svg?branch=master)](https://travis-ci.org/mheikenfeld/wrfcube)
 
