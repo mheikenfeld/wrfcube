@@ -20,7 +20,7 @@ install:
 
   # Install miniconda
   # -----------------
-  -export CONDA_BASE=http://repo.continuum.io/miniconda/Miniconda3;
+  - export CONDA_BASE=http://repo.continuum.io/miniconda/Miniconda3;
  
   - wget ${CONDA_BASE}-latest-Linux-x86_64.sh -O miniconda.sh;
 
