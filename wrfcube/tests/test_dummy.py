@@ -1,6 +1,6 @@
 import os
 import pytest
-
+import iris
 import wrfcube
 
 
