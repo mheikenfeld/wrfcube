@@ -49,8 +49,8 @@ install:
   - conda info -a
 
   # Install
-  - python setup.py --quiet install
-
+  #- python setup.py --quiet install
+  - pip install .
 # command to run tests
 #script
 script:
