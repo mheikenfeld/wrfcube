@@ -49,6 +49,8 @@ install:
   # Install
   #- python setup.py --quiet install
   - pip install .
+  # to check if package has been installed
+  - conda list
 # command to run tests
 #script
 script:
