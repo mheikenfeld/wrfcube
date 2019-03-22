@@ -265,6 +265,7 @@ variable_list_derive=[
         'area',
         'geopotential_height',
         'pressure',
+        'air_pressure',
         'relative_humidity',
         'w_unstaggered',
         'u_unstaggered',
@@ -293,6 +294,8 @@ def derivewrfcube(filenames,variable,**kwargs):
     elif variable in ['density','air_density']:
         variable_cube=calculate_wrf_density(filenames,**kwargs)
         #variable_cube_out=addcoordinates(filenames, 'T',variable_cube,add_coordinates)
+    elif variable in ['pressure','air_pressure']:    
+        variable_cube=calculate_wrf_pressure(filenames,**kwargs)
     elif variable == 'LWC':    
         variable_cube=calculate_wrf_LWC(filenames,**kwargs)
         #variable_cube=addcoordinates(filenames, 'QCLOUD',variable_cube,add_coordinates)
@@ -336,8 +339,6 @@ def derivewrfcube(filenames,variable,**kwargs):
 #        replace_cube=loadwrfcube(filenames,'V',**kwargs)
 #        variable_cube=replacecoordinates(variable_cube,replace_cube)  
 
-    elif variable == 'pressure':    
-        variable_cube=calculate_wrf_pressure(filenames,**kwargs)
         
     elif variable == 'geopotential':    
         variable_cube=calculate_wrf_geopotential(filenames,**kwargs)
