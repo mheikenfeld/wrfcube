@@ -409,10 +409,7 @@ def calculate_wrf_surface_precipitation_average(filenames,**kwargs):
     return surface_precip
 
 def calculate_wrf_surface_precipitation_accumulated(filenames,**kwargs):
-    RAINNC= loadwrfcube(filenames, 'RAINNC',**kwargs)
-    SNOWNC= loadwrfcube(filenames, 'SNOWNC',**kwargs)
-    GRAUPELNC= loadwrfcube(filenames, 'GRAUPELNC',**kwargs)
-    surface_precip_accum=RAINNC+SNOWNC+GRAUPELNC
+    surface_precip_accum=loadwrfcube(filenames, 'RAINNC',**kwargs)
     surface_precip_accum.rename('surface_precipitation_accumulated')
     return surface_precip_accum
 
@@ -420,10 +417,8 @@ def calculate_wrf_surface_precipitation_instantaneous(filenames,**kwargs):
     from xarray import open_mfdataset
     dataset=open_mfdataset(filenames,coords='all')
     dt=dataset.attrs['DT']
-    RAINNCV= loadwrfcube(filenames, 'RAINNCV',**kwargs)
-    SNOWNCV= loadwrfcube(filenames, 'SNOWNCV',**kwargs)
-    GRAUPELNCV= loadwrfcube(filenames, 'GRAUPELNCV',**kwargs)
-    surface_precip=(RAINNCV+SNOWNCV+GRAUPELNCV)/dt
+    RAINNCV = loadwrfcube(filenames, 'RAINNCV',**kwargs)
+    surface_precip=RAINNCV/dt
     surface_precip.units= 'kg m-2 s-1'
     surface_precip.rename('surface_precipitation_instantaneous')
     return surface_precip
