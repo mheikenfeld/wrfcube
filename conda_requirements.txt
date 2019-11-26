@@ -11,5 +11,5 @@ matplotlib
 iris 
 xarray 
 cartopy
-cf_units
+cf-units
 
