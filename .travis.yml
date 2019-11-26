@@ -35,13 +35,6 @@ install:
   - conda install -c conda-forge --quiet pytest
   - PREFIX=$HOME/miniconda/envs/$ENV_NAME
 
-
-  # Customise the testing environment
-  # ---------------------------------
-  - conda install -c conda-forge --quiet --file conda_requirements.txt
-  - conda install -c conda-forge --quiet pytest 
-  - PREFIX=$HOME/miniconda/envs/$ENV_NAME
-
   # Output debug info
   - conda list
   - conda info -a
