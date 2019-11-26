@@ -1,12 +1,12 @@
 from setuptools import setup
 
 setup(name='wrfcube',
-      version='0.1',
+      version='1.0',
       description='Load WRF output into iris cubes',
       url='http://github.com/mheikenfeld/wrfcube',
       author='Max Heikenfeld',
-      author_email='max.heikenfeld@physics.ox.ac.uk',
+      author_email='maxheikenfeld@web.de',
       license='GNU',
       packages=['wrfcube'],
-      install_requires=[],#['iris','numpy','netCDF4'],
+      install_requires=[],
       zip_safe=False)
