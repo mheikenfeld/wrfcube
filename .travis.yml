@@ -1,27 +1,20 @@
 language: python
 #sudo: false
 # choose python versions
-os: 
-  - linux
-#  - osx
-#  - windows
-
-
 python:
   - "3.6"
-#  - "3.7"
-
-#env:
-#  - TEST_TARGET=unit PYTHON_TARGET=3.6
-#  - TEST_TARGET=unit PYTHON_TARGET=3.7
-  # - TEST_TARGET=integration
+  - "3.7"
+  - "2.7"
 
 install:
 
   # Install miniconda
   # -----------------
-  - export CONDA_BASE=http://repo.continuum.io/miniconda/Miniconda3;
- 
+  - if [[ $PYTHON_TARGET == 2* ]]; then
+      export CONDA_BASE=http://repo.continuum.io/miniconda/Miniconda2;
+    else
+      export CONDA_BASE=http://repo.continuum.io/miniconda/Miniconda3;
+    fi
   - wget ${CONDA_BASE}-latest-Linux-x86_64.sh -O miniconda.sh;
 
   - bash miniconda.sh -b -p $HOME/miniconda
@@ -39,7 +32,7 @@ install:
   # Customise the testing environment
   # ---------------------------------
   - conda install -c conda-forge --quiet --file conda_requirements.txt
-  - conda install -c conda-forge --quiet pytest 
+  - conda install -c conda-forge --quiet pytest
   - PREFIX=$HOME/miniconda/envs/$ENV_NAME
 
   # Output debug info
