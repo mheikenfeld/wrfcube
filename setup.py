@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='wrfcube',
-      version='1.0',
+      version='1.0.1',
       description='Load WRF output into iris cubes',
       url='http://github.com/mheikenfeld/wrfcube',
       author='Max Heikenfeld',
